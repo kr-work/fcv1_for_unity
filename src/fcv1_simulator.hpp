@@ -1,12 +1,15 @@
 #include "box2d/box2d.h"
 #include <cmath>
-#include <pybind11/pybind11.h>
 #include <nlohmann/json.hpp>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
 
-namespace py = pybind11;
+#ifdef _WIN32
+  #define EXPORT_API extern "C" __declspec(dllexport)
+#elif __linux__ || __APPLE__
+  #define EXPORT_API extern "C" __attribute__((visibility("default")))
+#endif
+
 using json = nlohmann::json;
+
 
 constexpr float kStoneRadius = 0.145f;
 static constexpr ::uint8_t kStoneMax = 16;
@@ -303,8 +306,9 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    std::vector<std::vector<StonePosition>> step(float seconds_per_frame);
+    std::vector<digitalcurling3::StoneData> step(std::optional<int> index = std::nullopt, std::optional<float> coefficient = std::nullopt);
     void set_stones();
+    void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
     digitalcurling3::StoneDataVector get_stones();
 
@@ -317,9 +321,8 @@ private:
     std::vector<int> moved;
     std::vector<int> is_no_tick;
     std::vector<int> in_free_guard_zone;
-    std::vector<StonePosition> trajectory;
-    std::vector<std::vector<StonePosition>> trajectory_list;
     digitalcurling3::FiveLockWithID five_lock_with_id;
+    std::vector<digitalcurling3::StoneData> current_positions;
     int shot;
     bool free_guard_zone;
     b2World world;
@@ -332,21 +335,19 @@ class StoneSimulator
 {
 public:
     StoneSimulator();
-    std::tuple<py::array_t<double>, unsigned int, py::list> simulator(py::array_t<double> stone_positions, int shot, double x_velocity, double y_velocity, int angular_sign, unsigned int first_team_hummer, unsigned int shot_per_team);
+    std::tuple<std::vector<double>, unsigned int, std::vector<double>> simulator(std::vector<double> stone_positions, int shot, double x_velocity, double y_velocity, int angular_sign, unsigned int first_team_hummer, unsigned int shot_per_team);
 
 private:
     std::vector<digitalcurling3::StoneData> storage;
     digitalcurling3::StoneDataVector simulated_stones;
     std::vector<digitalcurling3::StoneData> state_values;
-    py::array_t<double> result;
+    std::vector<double> result;
     unsigned int free_guard_zone_flag;
     digitalcurling3::StoneDataVector simulated_stones_with_id;
     std::vector<unsigned int> vector_five_lock_result;
-    py::array_t<unsigned int> five_lock_result;
+    std::vector<unsigned int> five_lock_result;
     std::string model_path;
     std::vector<std::vector<StonePosition>> trajectory;
-    py::list step_list;
-    py::list trajectory_list;
     double x_velocity;
     double y_velocity;
     double angular_velocity;

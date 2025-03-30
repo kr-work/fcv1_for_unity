@@ -1,12 +1,9 @@
 #include <stdio.h>
 #include <iostream>
-#include <pybind11/pybind11.h>
 #include <nlohmann/json.hpp>
-#include <pybind11/numpy.h>
 #include <box2d/box2d.h>
 #include <cmath>
 #include <limits>
-#include <pybind11/stl.h>
 #include "fcv1_simulator.hpp"
 #include <set>
 #include <string>
@@ -67,22 +64,6 @@ inline float angular_acceleration(float linearSpeed)
     return -0.025f / clampedSpeed;
 }
 
-py::array_t<double> convert_stonedata(const digitalcurling3::StoneDataVector &simulated_stones)
-{
-    const size_t num_coordinates = 2; // x and y coordinates per stone
-    std::vector<double> temp_result(stones_per_simulation * num_coordinates);
-
-    for (size_t i = 0; i < stones_per_simulation; ++i)
-    {
-        size_t index = i * num_coordinates;
-        temp_result[index] = simulated_stones.stones[i].position.x;
-        temp_result[index + 1] = simulated_stones.stones[i].position.y;
-    }
-
-    py::array_t<double> result(py::array::ShapeContainer({stones_per_simulation * num_coordinates}), temp_result.data());
-    return result;
-}
-
 void SimulatorFCV1::ContactListener::PostSolve(b2Contact *contact, const b2ContactImpulse *impulse)
 {
     b2Body *a_body = contact->GetFixtureA()->GetBody();
@@ -113,7 +94,7 @@ void SimulatorFCV1::ContactListener::add_unique_id(std::vector<int> &list, int i
     }
 }
 
-SimulatorFCV1::SimulatorFCV1(std::vector<digitalcurling3::StoneData> const &stones) : stones(stones), world(b2Vec2(0, 0)), contact_listener_(this)
+SimulatorFCV1::SimulatorFCV1(const std::vector<digitalcurling3::StoneData>& stones) : stones(stones), world(b2Vec2(0, 0)), contact_listener_(this)
 {
     stone_body_def.type = b2_dynamicBody;
     stone_body_def.awake = false;
@@ -228,75 +209,86 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-std::vector<std::vector<StonePosition>> SimulatorFCV1::step(float seconds_per_frame)
+std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> index, std::optional<float> coefficient)
 {
-    trajectory_list.clear();
     // simulate
-    while (!is_awake.empty())
+    for (int &index : is_awake)
     {
-        trajectory.clear();
-        for (int &index : is_awake)
+        b2Vec2 const stone_velocity = stone_bodies[index]->GetLinearVelocity();
+        auto const [normalized_stone_velocity, stone_speed] = normalize(stone_velocity);
+        float const angular_velocity = stone_bodies[index]->GetAngularVelocity();
+
+        // 速度を計算
+        // ストーンが停止してる場合は無視
+        if (stone_speed > EPSILON)
         {
-            b2Vec2 const stone_velocity = stone_bodies[index]->GetLinearVelocity(); // copy
-            auto const [normalized_stone_velocity, stone_speed] = normalize(stone_velocity);
-            float const angular_velocity = stone_bodies[index]->GetAngularVelocity();
-
-            // 速度を計算
-            // ストーンが停止してる場合は無視
-            if (stone_speed > EPSILON)
+            StonePosition pos = {index, stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
+            // ストーンの速度を計算
+            float const new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002;
+            if (new_stone_speed <= 0.f)
             {
-                StonePosition pos = {index, stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
-                trajectory.push_back(pos);
-                // ストーンの速度を計算
-                float const new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * seconds_per_frame;
-                if (new_stone_speed <= 0.f)
-                {
-                    stone_bodies[index]->SetLinearVelocity(b2Vec2_zero);
-                    is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
-                }
-                else
-                {
-                    float const yaw = yaw_tate(stone_speed, angular_velocity) * seconds_per_frame;
-                    float const longitudinal_velocity = new_stone_speed * std::cos(yaw);
-                    float const transverse_velocity = new_stone_speed * std::sin(yaw);
-                    b2Vec2 const &e_longitudinal = normalized_stone_velocity;
-                    b2Vec2 const e_transverse = e_longitudinal.Skew();
-                    b2Vec2 const new_stone_velocity = longitudinal_velocity * e_longitudinal + transverse_velocity * e_transverse;
-                    stone_bodies[index]->SetLinearVelocity(new_stone_velocity);
-                }
-            }else{
+                stone_bodies[index]->SetLinearVelocity(b2Vec2_zero);
                 is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
-                //if(is_awake.size() != 1){
-                  //  std::cout << "size: " << is_awake.size() << ", normalized_vec_x: " << normalized_stone_velocity.x << ", normalized_vec_y: " << normalized_stone_velocity.y << ", speed: " << stone_speed << std::endl;   
-                //}
             }
-
-            // 角速度を計算
-            if (std::abs(angular_velocity) > EPSILON)
+            else
             {
-                float const angular_accel = angular_acceleration(stone_speed) * seconds_per_frame;
-                float new_angular_velocity = 0.f;
-                if (std::abs(angular_velocity) <= std::abs(angular_accel))
-                {
-                    new_angular_velocity = 0.f;
-                }
-                else
-                {
-                    new_angular_velocity = angular_velocity + angular_accel * angular_velocity / std::abs(angular_velocity);
-                }
-                stone_bodies[index]->SetAngularVelocity(new_angular_velocity);
+                float const yaw = yaw_tate(stone_speed, angular_velocity) * 0.002;
+                float const longitudinal_velocity = new_stone_speed * std::cos(yaw);
+                float const transverse_velocity = new_stone_speed * std::sin(yaw);
+                b2Vec2 const &e_longitudinal = normalized_stone_velocity;
+                b2Vec2 const e_transverse = e_longitudinal.Skew();
+                b2Vec2 const new_stone_velocity = longitudinal_velocity * e_longitudinal + transverse_velocity * e_transverse;
+                stone_bodies[index]->SetLinearVelocity(new_stone_velocity);
             }
+        }else{
+            is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
+            //if(is_awake.size() != 1){
+                //  std::cout << "size: " << is_awake.size() << ", normalized_vec_x: " << normalized_stone_velocity.x << ", normalized_vec_y: " << normalized_stone_velocity.y << ", speed: " << stone_speed << std::endl;   
+            //}
         }
-        trajectory_list.push_back(trajectory);
 
-        // storage.collisions.clear();
-
-        world.Step(
-            seconds_per_frame,
-            8,  // velocityIterations (公式マニュアルでの推奨値は 8)
-            3); // positionIterations (公式マニュアルでの推奨値は 3)
+        // 角速度を計算
+        if (std::abs(angular_velocity) > EPSILON)
+        {
+            float const angular_accel = angular_acceleration(stone_speed) * 0.002;
+            float new_angular_velocity = 0.f;
+            if (std::abs(angular_velocity) <= std::abs(angular_accel))
+            {
+                new_angular_velocity = 0.f;
+            }
+            else
+            {
+                new_angular_velocity = angular_velocity + angular_accel * angular_velocity / std::abs(angular_velocity);
+            }
+            stone_bodies[index]->SetAngularVelocity(new_angular_velocity);
+        }
     }
-    return trajectory_list;
+
+    // storage.collisions.clear();
+
+    world.Step(
+        0.002,
+        8,  // velocityIterations (公式マニュアルでの推奨値は 8)
+        3); // positionIterations (公式マニュアルでの推奨値は 3)
+
+    for (int index: is_awake)
+    {
+        b2Vec2 position = stone_bodies[index]->GetPosition();
+        digitalcurling3::Vector2 stone_position = {position.x, position.y};
+        current_positions.push_back(stone_position);
+    }
+    return current_positions;
+}
+
+void SimulatorFCV1::reset_stones()
+{
+    for (size_t i = 0; i < kStoneMax; i++)
+    {
+        b2Body *body = stone_bodies[i];
+        body->SetTransform(b2Vec2(0.f, 0.f), 0.f);
+        body->SetAwake(false);
+        body->SetEnabled(false);
+    }
 }
 
 void SimulatorFCV1::set_stones()
@@ -371,12 +363,40 @@ digitalcurling3::StoneDataVector SimulatorFCV1::get_stones()
     return stones_data;
 }
 
-StoneSimulator::StoneSimulator() : storage(), shot(), trajectory()
+StoneSimulator::StoneSimulator() : storage(), shot()
 {
     storage.reserve(16);
 }
 
-/// \brief Function to call from python
+
+EXPORT_API SimulatorFCV1* create_plugin()
+{
+    std::vector<digitalcurling3::StoneData> storage;
+    for (int i = 0; i < 16; i++)
+    {
+        storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(0.0f, 0.0f)));
+    }
+    return new SimulatorFCV1(storage);
+}
+
+EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
+{
+    delete plugin;
+}
+
+EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
+{
+    plugin->reset_stones();
+}
+
+EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* plugin, std::optional<int> index, std::optional<float> coefficient)
+{
+    return plugin->step(index, coefficient);
+}
+
+
+
+/// \brief Function to call from C#
 /// \param[in] stone_positions 16 stones' positions(The first 8 stones are the first attacker's stones, the last 8 stones are the second attacker's stones)
 /// \param[in] shot The number of shots
 /// \param[in] x_velocities The x component of the velocity of the stone to be thrown
@@ -385,58 +405,49 @@ StoneSimulator::StoneSimulator() : storage(), shot(), trajectory()
 /// \param[in] team_id The team that throws the stone. Team0 or Team1
 /// \param[in] shot_per_team The number of shots per team
 /// \returns The positions of the stones after the simulations
-std::tuple<py::array_t<double>, unsigned int, py::list> StoneSimulator::simulator(py::array_t<double> stone_positions, int total_shot, double x_velocity, double y_velocity, int angular_sign, unsigned int team_id, unsigned int shot_per_team)
-{
-    this->shot = total_shot;
-    this->shot_per_team = shot_per_team;
-    this->team_id = team_id;
-    storage.clear();
-    this->x_velocity = x_velocity;
-    this->y_velocity = y_velocity;
-    this->angular_velocity = angular_sign * cw;
+// std::tuple<std::vector<double>, unsigned int, std::vector> StoneSimulator::simulator(std::vector<double> stone_positions, int total_shot, double x_velocity, double y_velocity, int angular_sign, unsigned int team_id, unsigned int shot_per_team)
+// {
+//     this->shot = total_shot;
+//     this->shot_per_team = shot_per_team;
+//     this->team_id = team_id;
+//     storage.clear();
+//     this->x_velocity = x_velocity;
+//     this->y_velocity = y_velocity;
+//     this->angular_velocity = angular_sign * cw;
 
-    for (int i = 0; i < 16; i++)
-    {
-        storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(stone_positions.at(2 * i), stone_positions.at(2 * i + 1))));
-    }
+//     for (int i = 0; i < 16; i++)
+//     {
+//         storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(stone_positions.at(2 * i), stone_positions.at(2 * i + 1))));
+//     }
 
-    simulatorFCV1 = new SimulatorFCV1(storage);
-    simulatorFCV1->change_shot(this->shot);
-    simulatorFCV1->set_stones();
-    simulatorFCV1->set_velocity(this->x_velocity, this->y_velocity, this->angular_velocity, this->shot_per_team, this->team_id);
+//     simulatorFCV1 = new SimulatorFCV1(storage);
+//     simulatorFCV1->change_shot(this->shot);
+//     simulatorFCV1->set_stones();
+//     simulatorFCV1->set_velocity(this->x_velocity, this->y_velocity, this->angular_velocity, this->shot_per_team, this->team_id);
 
-    trajectory = simulatorFCV1->step(0.001);
-    free_guard_zone_flag = simulatorFCV1->is_in_playarea();
-    simulated_stones = simulatorFCV1->get_stones();
+//     trajectory = simulatorFCV1->step(0.001);
+//     free_guard_zone_flag = simulatorFCV1->is_in_playarea();
+//     simulated_stones = simulatorFCV1->get_stones();
 
-    result = convert_stonedata(simulated_stones);
+//     result = convert_stonedata(simulated_stones);
 
-    count = 0;
-    for (const std::vector<StonePosition> &step_stone_data : trajectory)
-    {
-        py::list step_list;
-        for (const StonePosition &stone : step_stone_data)
-        {
-            if (count % 100 == 0)
-            {
-                step_list.append(py::make_tuple(stone.id, stone.x, stone.y));
-            }
-        }
-        if (!step_list.empty())
-        {
-            trajectory_list.append(step_list);
-        }
-        count++;
-    }
+//     count = 0;
+//     for (const std::vector<StonePosition> &step_stone_data : trajectory)
+//     {
+//         std::vector step_list;
+//         for (const StonePosition &stone : step_stone_data)
+//         {
+//             if (count % 100 == 0)
+//             {
+//                 step_list.append(py::make_tuple(stone.id, stone.x, stone.y));
+//             }
+//         }
+//         if (!step_list.empty())
+//         {
+//             trajectory_list.append(step_list);
+//         }
+//         count++;
+//     }
 
-    return std::make_tuple(result, free_guard_zone_flag, trajectory_list);
-}
-
-// main関数
-
-PYBIND11_MODULE(simulator, m)
-{
-    py::class_<StoneSimulator>(m, "StoneSimulator")
-        .def(py::init<>())
-        .def("simulator", &StoneSimulator::simulator);
-}
+//     return std::make_tuple(result, free_guard_zone_flag, trajectory_list);
+// }
