@@ -306,7 +306,7 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    std::vector<digitalcurling3::StoneData> step(std::optional<int> index = std::nullopt, std::optional<float> coefficient = std::nullopt);
+    std::vector<digitalcurling3::StoneData> step(std::optional<int> stone_id = std::nullopt, std::optional<float> coefficient = 1.0f);
     void set_stones();
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
@@ -322,6 +322,7 @@ private:
     std::vector<int> is_no_tick;
     std::vector<int> in_free_guard_zone;
     digitalcurling3::FiveLockWithID five_lock_with_id;
+    float new_stone_speed;
     std::vector<digitalcurling3::StoneData> current_positions;
     int shot;
     bool free_guard_zone;

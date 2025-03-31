@@ -1,53 +1,53 @@
-# name: build
+name: build
 
-# on:
-#   push:
-#     branches: [main]
+on:
+  push:
+    branches: [main]
 
-# jobs:
-#   build:
-#     strategy:
-#       matrix:
-#         # os: [ubuntu-22.04, windows-latest, macos-latest]
-#         os: [windows-latest]
+jobs:
+  build:
+    strategy:
+      matrix:
+        # os: [ubuntu-22.04, windows-latest, macos-latest]
+        os: [windows-latest]
 
-#     runs-on: ${{matrix.os}}
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v3
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-#       - name: Install on Ubnutu
-#         if: matrix.os == 'ubuntu-22.04'
-#         run: |
-#           sudo apt-get install xorg-dev
+      - name: Install on Ubnutu
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get install xorg-dev
 
-#       - name: Build
-#         run: |
-#           git submodule update --init --recursive
-#           cd extern/box2d
-#           git checkout 9ebbbcd960ad424e03e5de6e66a40764c16f51bc
-#           mkdir build
-#           cd build
-#           cmake -DBOX2D_BUILD_DOCS=OFF -DBOX2D_BUILD_UNIT_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX="./" ..
-#           cmake --build . --config Release
-#           cmake --build . --target install --config Release
-#           cd ../../json
-#           mkdir build
-#           cd build
-#           cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX="./" ..
-#           cmake --build .
-#           cmake --build . --target install
-#           cd ../../../src
-#           mkdir build
-#           cd build
-#           cmake ..
-#           cmake --build . --config Release
+      - name: Build
+        run: |
+          git submodule update --init --recursive
+          cd extern/box2d
+          git checkout 9ebbbcd960ad424e03e5de6e66a40764c16f51bc
+          mkdir build
+          cd build
+          cmake -DBOX2D_BUILD_DOCS=OFF -DBOX2D_BUILD_UNIT_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX="./" ..
+          cmake --build . --config Release
+          cmake --build . --target install --config Release
+          cd ../../json
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX="./" ..
+          cmake --build .
+          cmake --build . --target install
+          cd ../../../src
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
 
-#       - name: Upload artifact
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: ${{runner.os}}-simulator
-#           path: src/build/simulator.*
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{runner.os}}-simulator
+          path: src/build/simulator.*
 
-#   # release:
-#   #   if: startsWith(github.ref, 'refs/tags/v')
+  # release:
+  #   if: startsWith(github.ref, 'refs/tags/v')

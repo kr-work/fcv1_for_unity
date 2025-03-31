@@ -209,7 +209,7 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> index, std::optional<float> coefficient)
+std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> stone_id, std::optional<float> coefficient)
 {
     // simulate
     for (int &index : is_awake)
@@ -224,7 +224,13 @@ std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> i
         {
             StonePosition pos = {index, stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
             // ストーンの速度を計算
-            float const new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002;
+            if (index == stone_id)
+            {
+                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f * coefficient.value();
+            } else
+            {
+                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f;
+            }
             if (new_stone_speed <= 0.f)
             {
                 stone_bodies[index]->SetLinearVelocity(b2Vec2_zero);
@@ -334,6 +340,12 @@ void SimulatorFCV1::set_stones()
     }
 }
 
+/// @brief Function to call simulate stones
+/// @param velocity_x The x component of the velocity of the stone to be thrown 
+/// @param velocity_y The y component of the velocity of the stone to be thrown
+/// @param angular_velocity The angular velocity of the stone to be thrown
+/// @param shot_per_team The number of shots per team, which is 0 to 7
+/// @param team_id The team that throws the stone. The number that "Team0" is 0 and "Team1" is 1. Team0 is the first attacker at the first end.
 void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
 {
     this->shot_per_team = shot_per_team;
@@ -387,6 +399,11 @@ EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
 EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
 {
     plugin->reset_stones();
+}
+
+EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
+{
+    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, shot_per_team, team_id);
 }
 
 EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* plugin, std::optional<int> index, std::optional<float> coefficient)
