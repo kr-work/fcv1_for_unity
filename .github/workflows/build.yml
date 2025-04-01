@@ -2,24 +2,19 @@ name: build
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*"
 
 jobs:
   build:
     strategy:
       matrix:
-        # os: [ubuntu-22.04, windows-latest, macos-latest]
         os: [windows-latest]
 
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install on Ubnutu
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo apt-get install xorg-dev
+        uses: actions/checkout@v4
 
       - name: Build
         run: |
@@ -46,8 +41,24 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{runner.os}}-simulator
-          path: src/build/simulator.*
+          name: simulator
+          path: src/build/Release/simulator.*
 
-  # release:
-  #   if: startsWith(github.ref, 'refs/tags/v')
+  release:
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: simulator
+
+      - name: Create release
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(echo "${GITHUB_REF}" | cut -d'/' -f3)
+          gh release create ${VERSION} -t "${VERSION}" ./simulator.*
+
