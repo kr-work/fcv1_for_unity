@@ -362,3 +362,44 @@ private:
     int x_velocities_length;
     int count;
 };
+
+
+EXPORT_API SimulatorFCV1* create_plugin()
+{
+    std::vector<digitalcurling3::StoneData> storage;
+    for (int i = 0; i < 16; i++)
+    {
+        storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(0.0f, 0.0f)));
+    }
+    return new SimulatorFCV1(storage);
+}
+
+EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
+{
+    delete plugin;
+}
+
+EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
+{
+    plugin->reset_stones();
+}
+
+EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
+{
+    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, shot_per_team, team_id);
+}
+
+/// @brief 
+/// @param plugin 
+/// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
+/// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
+/// @return
+EXPORT_API void plugin_step(SimulatorFCV1* plugin, digitalcurling3::StoneData* stone_position, int index, float coefficient)
+{
+    std::vector<digitalcurling3::StoneData> result = plugin->step(index, coefficient);
+
+    for (int i = 0; i < kStoneMax; i++)
+    {
+        stone_position[i] = result[i];
+    }
+}

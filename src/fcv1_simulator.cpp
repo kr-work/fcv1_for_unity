@@ -381,48 +381,6 @@ StoneSimulator::StoneSimulator() : storage(), shot()
 }
 
 
-EXPORT_API SimulatorFCV1* create_plugin()
-{
-    std::vector<digitalcurling3::StoneData> storage;
-    for (int i = 0; i < 16; i++)
-    {
-        storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(0.0f, 0.0f)));
-    }
-    return new SimulatorFCV1(storage);
-}
-
-EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
-{
-    delete plugin;
-}
-
-EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
-{
-    plugin->reset_stones();
-}
-
-EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
-{
-    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, shot_per_team, team_id);
-}
-
-/// @brief 
-/// @param plugin 
-/// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
-/// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
-/// @return 
-EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
-{
-    return plugin->step(index, coefficient);
-}
-
-EXPORT_API int plugin_add_two(int a)
-{
-    return a + 2;
-}
-
-
-
 /// \brief Function to call from C#
 /// \param[in] stone_positions 16 stones' positions(The first 8 stones are the first attacker's stones, the last 8 stones are the second attacker's stones)
 /// \param[in] shot The number of shots
