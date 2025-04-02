@@ -209,7 +209,7 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> stone_id, std::optional<float> coefficient)
+std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(int stone_id, float coefficient)
 {
     // simulate
     for (int &index : is_awake)
@@ -226,7 +226,7 @@ std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(std::optional<int> s
             // ストーンの速度を計算
             if (index == stone_id)
             {
-                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f * coefficient.value();
+                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f * coefficient;
             } else
             {
                 new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f;
@@ -406,7 +406,12 @@ EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, flo
     plugin->set_velocity(velocity_x, velocity_y, angular_velocity, shot_per_team, team_id);
 }
 
-EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* plugin, std::optional<int> index, std::optional<float> coefficient)
+/// @brief 
+/// @param plugin 
+/// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
+/// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
+/// @return 
+EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
 {
     return plugin->step(index, coefficient);
 }

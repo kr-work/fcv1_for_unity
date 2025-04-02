@@ -306,7 +306,7 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    std::vector<digitalcurling3::StoneData> step(std::optional<int> stone_id = std::nullopt, std::optional<float> coefficient = 1.0f);
+    std::vector<digitalcurling3::StoneData> step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
