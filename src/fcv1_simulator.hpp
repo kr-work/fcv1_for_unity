@@ -306,11 +306,12 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    std::vector<digitalcurling3::StoneData> step(int stone_id = -1, float coefficient = 1.0f);
+    int step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
     digitalcurling3::StoneDataVector get_stones();
+    void set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer);
 
 private:
     ContactListener contact_listener_;
@@ -329,6 +330,7 @@ private:
     b2World world;
     b2BodyDef stone_body_def;
     std::array<b2Body *, static_cast<std::size_t>(kStoneMax)> stone_bodies;
+    digitalcurling3::StoneData* stone_position_buffer = nullptr;
 };
 
 #pragma GCC visibility push(hidden)
@@ -364,14 +366,17 @@ private:
 };
 
 
-EXPORT_API SimulatorFCV1* create_plugin()
+EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_position)
 {
+
     std::vector<digitalcurling3::StoneData> storage;
     for (int i = 0; i < 16; i++)
     {
-        storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(0.0f, 0.0f)));
+        storage.push_back(digitalcurling3::StoneData(stone_position[i]));
     }
-    return new SimulatorFCV1(storage);
+    SimulatorFCV1* plugin = new SimulatorFCV1(storage);
+    plugin->set_stone_position_buffer(stone_position);
+    return plugin;
 }
 
 EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
@@ -394,12 +399,7 @@ EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, flo
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-EXPORT_API void plugin_step(SimulatorFCV1* plugin, digitalcurling3::StoneData* stone_position, int index, float coefficient)
+EXPORT_API int plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
 {
-    std::vector<digitalcurling3::StoneData> result = plugin->step(index, coefficient);
-
-    for (int i = 0; i < kStoneMax; i++)
-    {
-        stone_position[i] = result[i];
-    }
+    return plugin->step(index, coefficient);
 }

@@ -209,7 +209,7 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(int stone_id, float coefficient)
+int SimulatorFCV1::step(int stone_id, float coefficient)
 {
     // simulate
     for (int &index : is_awake)
@@ -276,14 +276,19 @@ std::vector<digitalcurling3::StoneData> SimulatorFCV1::step(int stone_id, float 
         0.002,
         8,  // velocityIterations (公式マニュアルでの推奨値は 8)
         3); // positionIterations (公式マニュアルでの推奨値は 3)
+    
+    if (is_awake.empty())
+    {
+        return 0;
+    }
 
     for (int index: is_awake)
     {
         b2Vec2 position = stone_bodies[index]->GetPosition();
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
-        current_positions.push_back(stone_position);
+        stone_position_buffer[index] = stone_position;
     }
-    return current_positions;
+    return 1;
 }
 
 void SimulatorFCV1::reset_stones()
@@ -373,6 +378,11 @@ digitalcurling3::StoneDataVector SimulatorFCV1::get_stones()
         stones_data.stones.push_back({digitalcurling3::Vector2(after_position.x, after_position.y)});
     }
     return stones_data;
+}
+
+void SimulatorFCV1::set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer)
+{
+    this->stone_position_buffer = stone_position_buffer;
 }
 
 StoneSimulator::StoneSimulator() : storage(), shot()
