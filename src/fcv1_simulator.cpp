@@ -411,6 +411,11 @@ EXPORT_API std::vector<digitalcurling3::StoneData> plugin_step(SimulatorFCV1* pl
     return plugin->step(index, coefficient);
 }
 
+EXPORT_API int plugin_add_two(int a)
+{
+    return a + 2;
+}
+
 
 
 /// \brief Function to call from C#
