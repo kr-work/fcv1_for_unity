@@ -94,7 +94,7 @@ void SimulatorFCV1::ContactListener::add_unique_id(std::vector<int> &list, int i
     }
 }
 
-SimulatorFCV1::SimulatorFCV1(std::vector<digitalcurling3::StoneData>& stones) : stones(stones), world(b2Vec2(0, 0)), contact_listener_(this)
+SimulatorFCV1::SimulatorFCV1() : world(b2Vec2(0, 0)), contact_listener_(this)
 {
     stone_body_def.type = b2_dynamicBody;
     stone_body_def.awake = false;
@@ -154,7 +154,7 @@ unsigned int SimulatorFCV1::is_in_playarea()
         {
             for (int index : moved)
             {
-                digitalcurling3::StoneData stone = stones[index];
+                digitalcurling3::StoneData stone = this->stones[index];
                 stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
             }
             return true;
@@ -196,7 +196,7 @@ void SimulatorFCV1::no_tick_rule()
         {
             for (int index : moved)
             {
-                auto stone = stones[index];
+                auto stone = this->stones[index];
                 stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
             }
             break;
@@ -343,12 +343,12 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     stone_bodies[index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
     is_awake.push_back(index);
     moved.push_back(index);
-    // for (size_t i = 0; i < kStoneMax; ++i)
-    // {
-    //     b2Body *body = stone_bodies[i];
-    //     b2Vec2 position = body->GetPosition();
-    //     this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
-    // }
+    for (size_t i = 0; i < kStoneMax; ++i)
+    {
+        b2Body *body = stone_bodies[i];
+        b2Vec2 position = body->GetPosition();
+        this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
+    }
 
     if (this->total_shot < 5)
     {

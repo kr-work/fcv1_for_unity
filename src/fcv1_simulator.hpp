@@ -288,7 +288,7 @@ public:
 class SimulatorFCV1
 {
 public:
-    explicit SimulatorFCV1(std::vector<digitalcurling3::StoneData> &stones);
+    explicit SimulatorFCV1();
     class ContactListener : public b2ContactListener
     {
     public:
@@ -316,7 +316,7 @@ public:
 
 private:
     ContactListener contact_listener_;
-    std::vector<digitalcurling3::StoneData> &stones;
+    std::vector<digitalcurling3::StoneData> stones;
     int shot_per_team;
     float angular_velocity;
     std::vector<int> is_awake;
@@ -370,13 +370,7 @@ private:
 
 EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_position)
 {
-
-    std::vector<digitalcurling3::StoneData> storage;
-    for (int i = 0; i < 16; i++)
-    {
-        storage.push_back(digitalcurling3::StoneData(stone_position[i]));
-    }
-    SimulatorFCV1* plugin = new SimulatorFCV1(storage);
+    SimulatorFCV1* plugin = new SimulatorFCV1();
     plugin->set_stone_position_buffer(stone_position);
     return plugin;
 }
