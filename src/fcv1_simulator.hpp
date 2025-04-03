@@ -36,7 +36,6 @@ struct Velocity
 
 struct StonePosition
 {
-    int id;
     float x;
     float y;
 };
@@ -311,7 +310,6 @@ public:
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id);
     void get_stones();
     void set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer);
-    void reset_is_awake();
     void set_status(int status);
 
 private:
@@ -320,7 +318,6 @@ private:
     int shot_per_team;
     float angular_velocity;
     std::vector<int> is_awake;
-    std::vector<int> moved;
     std::vector<int> is_no_tick;
     std::vector<int> in_free_guard_zone;
     digitalcurling3::FiveLockWithID five_lock_with_id;
@@ -351,11 +348,6 @@ EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
 EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
 {
     plugin->reset_stones();
-}
-
-EXPORT_API void plugin_reset_is_awake(SimulatorFCV1* plugin)
-{
-    plugin->reset_is_awake();
 }
 
 EXPORT_API void plugin_set_stones(SimulatorFCV1* plugin)

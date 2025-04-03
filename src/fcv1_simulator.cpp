@@ -76,9 +76,6 @@ void SimulatorFCV1::ContactListener::PostSolve(b2Contact *contact, const b2Conta
     add_unique_id(instance_->is_awake, collision.a.id);
     add_unique_id(instance_->is_awake, collision.b.id);
 
-    add_unique_id(instance_->moved, collision.a.id);
-    add_unique_id(instance_->moved, collision.b.id);
-
     b2WorldManifold world_manifold;
     contact->GetWorldManifold(&world_manifold);
 
@@ -96,7 +93,7 @@ void SimulatorFCV1::ContactListener::add_unique_id(std::vector<int> &list, int i
 
 SimulatorFCV1::SimulatorFCV1() : world(b2Vec2(0, 0)), contact_listener_(this)
 {
-    stones.reserve(kStoneMax);
+    stones.resize(kStoneMax);
     for (size_t i = 0; i < kStoneMax; ++i)
     {
         digitalcurling3::Vector2 position = {0.0f, 0.0f};
@@ -159,19 +156,19 @@ void SimulatorFCV1::is_in_playarea()
         b2Body *body = stone_bodies[i];
         if (body->GetPosition().y > y_upper_limit || body->GetPosition().x > stone_x_upper_limit || body->GetPosition().x < stone_x_lower_limit)
         {
-            for (int index : moved)
+            for (int i = 0; i < kStoneMax; ++i)
             {
-                digitalcurling3::StoneData stone = stones[index];
-                stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
+                digitalcurling3::StoneData stone = stones[i];
+                stone_bodies[i]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
                 if (stone.position.x == 0.f && stone.position.y == 0.f)
                 {
-                    stone_bodies[index]->SetEnabled(false);
-                    stone_bodies[index]->SetAwake(false);
+                    stone_bodies[i]->SetEnabled(false);
+                    stone_bodies[i]->SetAwake(false);
                 }
                 else
                 {
-                    stone_bodies[index]->SetEnabled(true);
-                    stone_bodies[index]->SetAwake(true);
+                    stone_bodies[i]->SetEnabled(true);
+                    stone_bodies[i]->SetAwake(true);
                 }
             }
         }
@@ -181,7 +178,7 @@ void SimulatorFCV1::is_in_playarea()
 // ノーティックルール対応用関数
 bool SimulatorFCV1::on_center_line(b2Body *body)
 {
-    if (body->IsEnabled() && kStoneRadius - std::abs(body->GetPosition().x) < 0.0)
+    if (std::abs(body->GetPosition().x) <= kStoneRadius)
     {
         return true;
     }
@@ -194,7 +191,7 @@ void SimulatorFCV1::no_tick_checker()
     {
         b2Body *body = stone_bodies[i];
         float position_y = body -> GetPosition().y;
-        if (on_center_line(body) && position_y > y_lower_limit && position_y < (tee_line - house_radius))
+        if (position_y > y_lower_limit && position_y < (tee_line - house_radius) && on_center_line(body))
         {
             is_no_tick.push_back(i);
         }
@@ -207,12 +204,12 @@ void SimulatorFCV1::no_tick_rule()
     for (int i : is_no_tick)
     {
         b2Body *body = stone_bodies[i];
-        if (kStoneRadius - std::abs(body->GetPosition().x) > 0.0)
+        if (std::abs(body->GetPosition().x) > kStoneRadius)
         {
-            for (int index : moved)
+            for (size_t j = 0; j < kStoneMax; ++j)
             {
-                auto stone = stones[index];
-                stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
+                digitalcurling3::StoneData stone = stones[j];
+                stone_bodies[j]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
             }
             break;
         }
@@ -232,7 +229,15 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
         // ストーンが停止してる場合は無視
         if (stone_speed > EPSILON)
         {
-            StonePosition pos = {index, stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
+            digitalcurling3::Vector2 stone_position = {stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
+            if (stone_position.x > stone_x_upper_limit || stone_x_lower_limit < stone_position.x)
+            {
+                stone_bodies[index]->SetTransform(b2Vec2(0.f, 0.f), 0.f);
+                stone_bodies[index]->SetAwake(false);
+                stone_bodies[index]->SetEnabled(false);
+                is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
+                continue;
+            }
             // ストーンの速度を計算
             if (index == stone_id)
             {
@@ -313,14 +318,6 @@ void SimulatorFCV1::reset_stones()
     }
 }
 
-void SimulatorFCV1::reset_is_awake()
-{
-    is_awake.clear();
-    moved.clear();
-    in_free_guard_zone.clear();
-    is_no_tick.clear();
-}
-
 void SimulatorFCV1::set_stones()
 {
     // update bodies
@@ -348,6 +345,10 @@ void SimulatorFCV1::set_stones()
 /// @param team_id The team that throws the stone. The number that "Team0" is 0 and "Team1" is 1. Team0 is the first attacker at the first end.
 void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot, unsigned int shot_per_team, unsigned int team_id)
 {
+    is_awake.clear();
+    in_free_guard_zone.clear();
+    is_no_tick.clear();
+
     this->total_shot = total_shot;
     this->shot_per_team = shot_per_team;
     int index = this->shot_per_team + team_id * 8;
@@ -357,11 +358,9 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     stone_bodies[index]->SetAwake(true);
     stone_bodies[index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
     is_awake.push_back(index);
-    moved.push_back(index);
     for (size_t i = 0; i < kStoneMax; ++i)
     {
-        b2Body *body = stone_bodies[i];
-        b2Vec2 position = body->GetPosition();
+        b2Vec2 position = stone_bodies[i]->GetPosition();
         stones[i].position = digitalcurling3::Vector2(position.x, position.y);
     }
 
@@ -385,13 +384,16 @@ void SimulatorFCV1::set_status(int status)
 
 void SimulatorFCV1::get_stones()
 {
-    if (this->status == 0)
+    if (this->total_shot < 5)
     {
-        is_in_playarea();
-    }
-    else if (this->status == 1)
-    {
-        no_tick_rule();
+        if (this->status == 0)
+        {
+            is_in_playarea();
+        }
+        else if (this->status == 1)
+        {
+            no_tick_rule();
+        }
     }
 
     for (size_t i = 0; i < kStoneMax; i++)
