@@ -343,12 +343,12 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     stone_bodies[index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
     is_awake.push_back(index);
     moved.push_back(index);
-    for (size_t i = 0; i < kStoneMax; ++i)
-    {
-        b2Body *body = stone_bodies[i];
-        b2Vec2 position = body->GetPosition();
-        this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
-    }
+    // for (size_t i = 0; i < kStoneMax; ++i)
+    // {
+    //     b2Body *body = stone_bodies[i];
+    //     b2Vec2 position = body->GetPosition();
+    //     this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
+    // }
 
     if (this->total_shot < 5)
     {
