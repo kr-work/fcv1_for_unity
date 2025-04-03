@@ -94,7 +94,7 @@ void SimulatorFCV1::ContactListener::add_unique_id(std::vector<int> &list, int i
     }
 }
 
-SimulatorFCV1::SimulatorFCV1(const std::vector<digitalcurling3::StoneData>& stones) : stones(stones), world(b2Vec2(0, 0)), contact_listener_(this)
+SimulatorFCV1::SimulatorFCV1(std::vector<digitalcurling3::StoneData>& stones) : stones(stones), world(b2Vec2(0, 0)), contact_listener_(this)
 {
     stone_body_def.type = b2_dynamicBody;
     stone_body_def.awake = false;
@@ -118,11 +118,6 @@ SimulatorFCV1::SimulatorFCV1(const std::vector<digitalcurling3::StoneData>& ston
         stone_bodies[i]->CreateFixture(&stone_fixture_def);
     }
     world.SetContactListener(&contact_listener_);
-}
-
-void SimulatorFCV1::change_shot(int shot)
-{
-    this->shot = shot;
 }
 
 bool SimulatorFCV1::is_freeguardzone(b2Body *body)
@@ -286,7 +281,7 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
     {
         b2Vec2 position = stone_bodies[index]->GetPosition();
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
-        stone_position_buffer[index] = stone_position;
+        this->stone_position_buffer[index] = stone_position;
     }
     return true;
 }
@@ -299,18 +294,24 @@ void SimulatorFCV1::reset_stones()
         body->SetTransform(b2Vec2(0.f, 0.f), 0.f);
         body->SetAwake(false);
         body->SetEnabled(false);
+        this->stone_position_buffer[i] = digitalcurling3::Vector2(0.0f, 0.0f);
     }
+}
+
+void SimulatorFCV1::reset_is_awake()
+{
+    is_awake.clear();
+    moved.clear();
+    in_free_guard_zone.clear();
+    is_no_tick.clear();
 }
 
 void SimulatorFCV1::set_stones()
 {
     // update bodies
-    int ally_position_size = shot / 2 + 1;
-    int opponent_position_size = shot / 2 + 9;
-    for (size_t i = 0; i < ally_position_size; ++i)
+    for (size_t i = 0; i < kStoneMax; ++i)
     {
-        const digitalcurling3::StoneData &stone = stones[i];
-        digitalcurling3::Vector2 position = stone.position;
+        digitalcurling3::Vector2 position = this->stone_position_buffer[i].position;
         if (position.x == 0.f && position.y == 0.f)
         {
             stone_bodies[i]->SetEnabled(false);
@@ -320,27 +321,6 @@ void SimulatorFCV1::set_stones()
             stone_bodies[i]->SetEnabled(true);
             stone_bodies[i]->SetAwake(true);
             stone_bodies[i]->SetTransform(b2Vec2(position.x, position.y), 0.f);
-        }
-    }
-
-    for (size_t i = 8; i < opponent_position_size; ++i)
-    {
-        const digitalcurling3::StoneData &stone = stones[i];
-        digitalcurling3::Vector2 position = stone.position;
-        if (position.x == 0.f && position.y == 0.f)
-        {
-            stone_bodies[i]->SetEnabled(false);
-        }
-        else
-        {
-            stone_bodies[i]->SetEnabled(true);
-            stone_bodies[i]->SetAwake(true);
-            stone_bodies[i]->SetTransform(b2Vec2(position.x, position.y), 0.f);
-        }
-
-        if (this->shot < 5)
-        {
-            freeguardzone_checker();
         }
     }
 }
@@ -351,8 +331,9 @@ void SimulatorFCV1::set_stones()
 /// @param angular_velocity The angular velocity of the stone to be thrown
 /// @param shot_per_team The number of shots per team, which is 0 to 7
 /// @param team_id The team that throws the stone. The number that "Team0" is 0 and "Team1" is 1. Team0 is the first attacker at the first end.
-void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
+void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot, unsigned int shot_per_team, unsigned int team_id)
 {
+    this->total_shot = total_shot;
     this->shot_per_team = shot_per_team;
     int index = this->shot_per_team + team_id * 8;
     stone_bodies[index]->SetLinearVelocity(b2Vec2(velocity_x, velocity_y));
@@ -362,22 +343,44 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     stone_bodies[index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
     is_awake.push_back(index);
     moved.push_back(index);
+    for (size_t i = 0; i < kStoneMax; ++i)
+    {
+        b2Body *body = stone_bodies[i];
+        b2Vec2 position = body->GetPosition();
+        this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
+    }
+
+    if (this->total_shot < 5)
+    {
+        if (this->status == 0)    // status=0: apply five rock rule
+        {
+            freeguardzone_checker();
+        }
+        else if (this->status == 1) // status=1: apply no tick rule
+        {
+            no_tick_checker();
+        }
+    }
 }
 
-digitalcurling3::StoneDataVector SimulatorFCV1::get_stones()
+void SimulatorFCV1::set_status(int status)
 {
-    digitalcurling3::StoneDataVector stones_data;
-    for (b2Body *body : stone_bodies)
+    this->status = status;
+}
+
+void SimulatorFCV1::get_stones()
+{
+    for (size_t i = 0; i < kStoneMax; i++)
     {
+        b2Body *body = stone_bodies[i];
         b2Vec2 position = body->GetPosition();
-        if (position.x > stone_x_upper_limit || position.x < stone_x_lower_limit || position.y > y_upper_limit || position.y < y_lower_limit)
+        if (position.x > stone_x_upper_limit || position.x < stone_x_lower_limit || position.y > y_upper_limit || position.y < y_lower_limit)  // This stone is out of the play area
         {
             body->SetTransform(b2Vec2(0.f, 0.f), 0.f);
         }
         b2Vec2 after_position = body->GetPosition();
-        stones_data.stones.push_back({digitalcurling3::Vector2(after_position.x, after_position.y)});
+        this->stone_position_buffer[i] = digitalcurling3::Vector2(after_position.x, after_position.y);
     }
-    return stones_data;
 }
 
 void SimulatorFCV1::set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer)

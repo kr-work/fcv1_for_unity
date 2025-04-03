@@ -288,7 +288,7 @@ public:
 class SimulatorFCV1
 {
 public:
-    explicit SimulatorFCV1(std::vector<digitalcurling3::StoneData> const &stones);
+    explicit SimulatorFCV1(std::vector<digitalcurling3::StoneData> &stones);
     class ContactListener : public b2ContactListener
     {
     public:
@@ -301,7 +301,6 @@ public:
     };
     bool is_freeguardzone(b2Body *body);
     void freeguardzone_checker();
-    void change_shot(int shot);
     unsigned int is_in_playarea();
     bool on_center_line(b2Body *body);
     void no_tick_checker();
@@ -309,13 +308,15 @@ public:
     bool step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
-    void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
-    digitalcurling3::StoneDataVector get_stones();
+    void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id);
+    void get_stones();
     void set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer);
+    void reset_is_awake();
+    void set_status(int status);
 
 private:
     ContactListener contact_listener_;
-    std::vector<digitalcurling3::StoneData> const &stones;
+    std::vector<digitalcurling3::StoneData> &stones;
     int shot_per_team;
     float angular_velocity;
     std::vector<int> is_awake;
@@ -325,12 +326,13 @@ private:
     digitalcurling3::FiveLockWithID five_lock_with_id;
     float new_stone_speed;
     std::vector<digitalcurling3::StoneData> current_positions;
-    int shot;
+    unsigned int total_shot;
     bool free_guard_zone;
     b2World world;
     b2BodyDef stone_body_def;
     std::array<b2Body *, static_cast<std::size_t>(kStoneMax)> stone_bodies;
     digitalcurling3::StoneData* stone_position_buffer = nullptr;
+    int status = 0; // 0: five lock, 1: no tick
 };
 
 #pragma GCC visibility push(hidden)
@@ -389,9 +391,29 @@ EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
     plugin->reset_stones();
 }
 
-EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id)
+EXPORT_API void plugin_reset_is_awake(SimulatorFCV1* plugin)
 {
-    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, shot_per_team, team_id);
+    plugin->reset_is_awake();
+}
+
+EXPORT_API void plugin_set_stones(SimulatorFCV1* plugin)
+{
+    plugin->set_stones();
+}
+
+EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id)
+{
+    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, total_shot,shot_per_team, team_id);
+}
+
+EXPORT_API void plugin_set_status(SimulatorFCV1* plugin, int status)
+{
+    plugin->set_status(status);
+}
+
+EXPORT_API void plugin_get_stones(SimulatorFCV1* plugin)
+{
+    plugin->get_stones();
 }
 
 /// @brief 
