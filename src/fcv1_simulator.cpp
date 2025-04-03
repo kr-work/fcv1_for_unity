@@ -152,7 +152,7 @@ void SimulatorFCV1::freeguardzone_checker()
 }
 
 // ファイブロックルール対応用関数
-unsigned int SimulatorFCV1::is_in_playarea()
+void SimulatorFCV1::is_in_playarea()
 {
     for (int i : in_free_guard_zone)
     {
@@ -163,11 +163,19 @@ unsigned int SimulatorFCV1::is_in_playarea()
             {
                 digitalcurling3::StoneData stone = stones[index];
                 stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
+                if (stone.position.x == 0.f && stone.position.y == 0.f)
+                {
+                    stone_bodies[index]->SetEnabled(false);
+                    stone_bodies[index]->SetAwake(false);
+                }
+                else
+                {
+                    stone_bodies[index]->SetEnabled(true);
+                    stone_bodies[index]->SetAwake(true);
+                }
             }
-            return true;
         }
     }
-    return false;
 }
 
 // ノーティックルール対応用関数
@@ -377,6 +385,15 @@ void SimulatorFCV1::set_status(int status)
 
 void SimulatorFCV1::get_stones()
 {
+    if (this->status == 0)
+    {
+        is_in_playarea();
+    }
+    else if (this->status == 1)
+    {
+        no_tick_rule();
+    }
+
     for (size_t i = 0; i < kStoneMax; i++)
     {
         b2Body *body = stone_bodies[i];
@@ -384,6 +401,8 @@ void SimulatorFCV1::get_stones()
         if (position.x > stone_x_upper_limit || position.x < stone_x_lower_limit || position.y > y_upper_limit || position.y < y_lower_limit)  // This stone is out of the play area
         {
             body->SetTransform(b2Vec2(0.f, 0.f), 0.f);
+            body->SetAwake(false);
+            body->SetEnabled(false);
         }
         b2Vec2 after_position = body->GetPosition();
         this->stone_position_buffer[i] = digitalcurling3::Vector2(after_position.x, after_position.y);

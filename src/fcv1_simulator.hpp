@@ -301,7 +301,7 @@ public:
     };
     bool is_freeguardzone(b2Body *body);
     void freeguardzone_checker();
-    unsigned int is_in_playarea();
+    void is_in_playarea();
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
