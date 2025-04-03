@@ -335,43 +335,11 @@ private:
     int status = 0; // 0: five lock, 1: no tick
 };
 
-#pragma GCC visibility push(hidden)
-class StoneSimulator
-{
-public:
-    StoneSimulator();
-    std::tuple<std::vector<double>, unsigned int, std::vector<double>> simulator(std::vector<double> stone_positions, int shot, double x_velocity, double y_velocity, int angular_sign, unsigned int first_team_hummer, unsigned int shot_per_team);
 
-private:
-    std::vector<digitalcurling3::StoneData> storage;
-    digitalcurling3::StoneDataVector simulated_stones;
-    std::vector<digitalcurling3::StoneData> state_values;
-    std::vector<double> result;
-    unsigned int free_guard_zone_flag;
-    digitalcurling3::StoneDataVector simulated_stones_with_id;
-    std::vector<unsigned int> vector_five_lock_result;
-    std::vector<unsigned int> five_lock_result;
-    std::string model_path;
-    std::vector<std::vector<StonePosition>> trajectory;
-    double x_velocity;
-    double y_velocity;
-    double angular_velocity;
-    SimulatorFCV1 *simulatorFCV1;
-    json config;
-    int shot_per_team;
-    unsigned int team_id;
-    int shot;
-    int thread_id;
-    int index;
-    int x_velocities_length;
-    int count;
-};
-
-
-EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_position)
+EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data)
 {
     SimulatorFCV1* plugin = new SimulatorFCV1();
-    plugin->set_stone_position_buffer(stone_position);
+    plugin->set_stone_position_buffer(stone_data);
     return plugin;
 }
 

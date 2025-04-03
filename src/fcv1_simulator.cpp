@@ -96,6 +96,13 @@ void SimulatorFCV1::ContactListener::add_unique_id(std::vector<int> &list, int i
 
 SimulatorFCV1::SimulatorFCV1() : world(b2Vec2(0, 0)), contact_listener_(this)
 {
+    stones.reserve(kStoneMax);
+    for (size_t i = 0; i < kStoneMax; ++i)
+    {
+        digitalcurling3::Vector2 position = {0.0f, 0.0f};
+        stones[i].position = position;
+    }
+
     stone_body_def.type = b2_dynamicBody;
     stone_body_def.awake = false;
     stone_body_def.bullet = true;
@@ -154,7 +161,7 @@ unsigned int SimulatorFCV1::is_in_playarea()
         {
             for (int index : moved)
             {
-                digitalcurling3::StoneData stone = this->stones[index];
+                digitalcurling3::StoneData stone = stones[index];
                 stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
             }
             return true;
@@ -196,7 +203,7 @@ void SimulatorFCV1::no_tick_rule()
         {
             for (int index : moved)
             {
-                auto stone = this->stones[index];
+                auto stone = stones[index];
                 stone_bodies[index]->SetTransform(b2Vec2(stone.position.x, stone.position.y), 0.f);
             }
             break;
@@ -347,7 +354,7 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     {
         b2Body *body = stone_bodies[i];
         b2Vec2 position = body->GetPosition();
-        this->stones[i].position = digitalcurling3::Vector2(position.x, position.y);
+        stones[i].position = digitalcurling3::Vector2(position.x, position.y);
     }
 
     if (this->total_shot < 5)
@@ -388,64 +395,3 @@ void SimulatorFCV1::set_stone_position_buffer(digitalcurling3::StoneData *stone_
     this->stone_position_buffer = stone_position_buffer;
 }
 
-StoneSimulator::StoneSimulator() : storage(), shot()
-{
-    storage.reserve(16);
-}
-
-
-/// \brief Function to call from C#
-/// \param[in] stone_positions 16 stones' positions(The first 8 stones are the first attacker's stones, the last 8 stones are the second attacker's stones)
-/// \param[in] shot The number of shots
-/// \param[in] x_velocities The x component of the velocity of the stone to be thrown
-/// \param[in] y_velocities The y component of the velocity of the stone to be thrown
-/// \param[in] angular_sign 1 -> cw, -1 -> ccw
-/// \param[in] team_id The team that throws the stone. Team0 or Team1
-/// \param[in] shot_per_team The number of shots per team
-/// \returns The positions of the stones after the simulations
-// std::tuple<std::vector<double>, unsigned int, std::vector> StoneSimulator::simulator(std::vector<double> stone_positions, int total_shot, double x_velocity, double y_velocity, int angular_sign, unsigned int team_id, unsigned int shot_per_team)
-// {
-//     this->shot = total_shot;
-//     this->shot_per_team = shot_per_team;
-//     this->team_id = team_id;
-//     storage.clear();
-//     this->x_velocity = x_velocity;
-//     this->y_velocity = y_velocity;
-//     this->angular_velocity = angular_sign * cw;
-
-//     for (int i = 0; i < 16; i++)
-//     {
-//         storage.push_back(digitalcurling3::StoneData(digitalcurling3::Vector2(stone_positions.at(2 * i), stone_positions.at(2 * i + 1))));
-//     }
-
-//     simulatorFCV1 = new SimulatorFCV1(storage);
-//     simulatorFCV1->change_shot(this->shot);
-//     simulatorFCV1->set_stones();
-//     simulatorFCV1->set_velocity(this->x_velocity, this->y_velocity, this->angular_velocity, this->shot_per_team, this->team_id);
-
-//     trajectory = simulatorFCV1->step(0.001);
-//     free_guard_zone_flag = simulatorFCV1->is_in_playarea();
-//     simulated_stones = simulatorFCV1->get_stones();
-
-//     result = convert_stonedata(simulated_stones);
-
-//     count = 0;
-//     for (const std::vector<StonePosition> &step_stone_data : trajectory)
-//     {
-//         std::vector step_list;
-//         for (const StonePosition &stone : step_stone_data)
-//         {
-//             if (count % 100 == 0)
-//             {
-//                 step_list.append(py::make_tuple(stone.id, stone.x, stone.y));
-//             }
-//         }
-//         if (!step_list.empty())
-//         {
-//             trajectory_list.append(step_list);
-//         }
-//         count++;
-//     }
-
-//     return std::make_tuple(result, free_guard_zone_flag, trajectory_list);
-// }
