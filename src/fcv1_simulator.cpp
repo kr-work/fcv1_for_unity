@@ -209,7 +209,7 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-int SimulatorFCV1::step(int stone_id, float coefficient)
+bool SimulatorFCV1::step(int stone_id, float coefficient)
 {
     // simulate
     for (int &index : is_awake)
@@ -279,7 +279,7 @@ int SimulatorFCV1::step(int stone_id, float coefficient)
     
     if (is_awake.empty())
     {
-        return 0;
+        return false;
     }
 
     for (int index: is_awake)
@@ -288,7 +288,7 @@ int SimulatorFCV1::step(int stone_id, float coefficient)
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
         stone_position_buffer[index] = stone_position;
     }
-    return 1;
+    return true;
 }
 
 void SimulatorFCV1::reset_stones()

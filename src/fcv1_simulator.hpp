@@ -306,7 +306,7 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    int step(int stone_id = -1, float coefficient = 1.0f);
+    bool step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int shot_per_team, unsigned int team_id);
@@ -399,7 +399,7 @@ EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, flo
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-EXPORT_API int plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
+EXPORT_API bool plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
 {
     return plugin->step(index, coefficient);
 }
