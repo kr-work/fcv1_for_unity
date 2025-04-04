@@ -13,7 +13,7 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
     && apt-get install libx11-dev xorg-dev libglu1-mesa-dev doxygen -y \
     && apt-get install -y build-essential libssl-dev zlib1g-dev libncurses5-dev libffi-dev libsqlite3-dev libreadline-dev libbz2-dev wget curl \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && apt-get clean \
+    && apt-get clean
 
 # [Optional] Uncomment this section to install additional vcpkg ports.
 # RUN su vscode -c "${VCPKG_ROOT}/vcpkg install <your-port-name-here>"
