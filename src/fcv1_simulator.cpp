@@ -230,7 +230,7 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
         if (stone_speed > EPSILON)
         {
             digitalcurling3::Vector2 stone_position = {stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
-            if (stone_position.x > stone_x_upper_limit || stone_x_lower_limit < stone_position.x)
+            if (stone_position.x > stone_x_upper_limit || stone_x_lower_limit > stone_position.x)
             {
                 stone_bodies[index]->SetTransform(b2Vec2(0.f, 0.f), 0.f);
                 stone_bodies[index]->SetAwake(false);
