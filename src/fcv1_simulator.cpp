@@ -154,7 +154,9 @@ void SimulatorFCV1::is_in_playarea()
     for (int i : in_free_guard_zone)
     {
         b2Body *body = stone_bodies[i];
-        if (body->GetPosition().y > y_upper_limit || body->GetPosition().x > stone_x_upper_limit || body->GetPosition().x < stone_x_lower_limit)
+        float position_x = body->GetPosition().x;
+        float position_y = body->GetPosition().y;
+        if (position_y > y_upper_limit || position_x > stone_x_upper_limit || position_x < stone_x_lower_limit || (position_x == 0.0f && position_y == 0.0f))
         {
             for (int i = 0; i < kStoneMax; ++i)
             {
@@ -204,7 +206,9 @@ void SimulatorFCV1::no_tick_rule()
     for (int i : is_no_tick)
     {
         b2Body *body = stone_bodies[i];
-        if (std::abs(body->GetPosition().x) > kStoneRadius)
+        float position_x = body->GetPosition().x;
+        float position_y = body->GetPosition().y;
+        if (std::abs(position_x) > kStoneRadius || (position_x == 0.0f && position_y == 0.0f))
         {
             for (size_t j = 0; j < kStoneMax; ++j)
             {
@@ -263,9 +267,6 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
             }
         }else{
             is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
-            //if(is_awake.size() != 1){
-                //  std::cout << "size: " << is_awake.size() << ", normalized_vec_x: " << normalized_stone_velocity.x << ", normalized_vec_y: " << normalized_stone_velocity.y << ", speed: " << stone_speed << std::endl;   
-            //}
         }
 
         // 角速度を計算
