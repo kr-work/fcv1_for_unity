@@ -392,7 +392,16 @@ EXPORT_API void plugin_set_status(SimulatorFCV1* plugin, int status)
 /// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
 /// @param plugin 
 /// @return 
+[[deprecated ("Please use new function \"plugin_check_rule\"")]]
 EXPORT_API void plugin_get_stones(SimulatorFCV1* plugin)
+{
+    plugin->get_stones();
+}
+
+/// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
+/// @param plugin
+/// @return
+EXPORT_API void plugin_check_rule(SimulatorFCV1* plugin)
 {
     plugin->get_stones();
 }
