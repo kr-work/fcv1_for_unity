@@ -50,7 +50,7 @@ cmake --build . --config Release
 
     - 関連知識: シミュレーションが終了したら、忘れずに呼び出してリソースを解放してください。
 
-- **plugin_reset_stones**(SimulatorFCV1* plugin):
+- **reset_stones**(SimulatorFCV1* plugin):
 
     - 機能: 全てのストーンを初期位置にリセットし、非アクティブな状態にします。
 
@@ -60,7 +60,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::reset_stones() が呼ばれます。ストーンの位置バッファ (stone_position_buffer) もリセットされます。
 
-- **plugin_set_stones**(SimulatorFCV1* plugin):
+- **set_stones**(SimulatorFCV1* plugin):
 
     - 機能: Unity側で設定したストーンの位置情報をシミュレーターに反映させます。
 
@@ -70,7 +70,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::set_stones() が呼ばれます。プラグイン作成時に渡された stone_position_buffer の情報に基づいて、Box2DのBody (stone_bodies) の位置とアクティブ状態を更新します。
 
-- **plugin_set_velocity**(SimulatorFCV1* plugin,float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id):
+- **set_velocity**(SimulatorFCV1* plugin,float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id):
 
     - 機能: 投球するストーンの初速度、角速度、ゲームの状態（ショット数、チームID）を設定し、投球を開始します。
 
@@ -87,7 +87,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::set_velocity() が呼ばれます。指定されたストーンの速度、角速度を設定し、アクティブ状態にします。また、現在のゲームの状態（総ショット数、チーム内ショット数）を記録し、ファイブロックルールやノーティックルールの適用状況を初期化します。
 
-- **plugin_set_status**(SimulatorFCV1* plugin, int status):
+- **set_status**(SimulatorFCV1* plugin, int status):
 
     - 機能: 現在のゲームの状態（適用するルール）を設定します。
 
@@ -99,7 +99,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::set_status() が呼ばれます
 
-- **plugin_get_stones**(SimulatorFCV1* plugin):
+- **check_rule**(SimulatorFCV1* plugin):
 
     - 機能: シミュレーター内のストーンの最新の位置情報を、プラグイン作成時に渡されたバッファ (stone_position_buffer) に書き込みます
 
@@ -109,7 +109,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::get_stones() が呼ばれます。必要に応じてファイブロックルールやノーティックルールに基づいたストーンの処理を行い、プレイエリア外に出たストーンを無効化し、最終的なストーンの位置を stone_position_buffer に格納します。
 
-- **plugin_step**(SimulatorFCV1* plugin, int index, float coefficient):
+- **step**(SimulatorFCV1* plugin, int index, float coefficient):
 
     - 機能: シミュレーションを1タイムステップ進行させます。
 
@@ -127,7 +127,7 @@ cmake --build . --config Release
 
     - 物理モデル: Box2D物理エンジンをベースに、ストーンの運動（並進、回転）、氷との摩擦、ストーン同士の衝突をシミュレートしています 。
 
-    - 縦方向の加速度: ストーンの速度に基づいて計算される、進行方向の減速です。速度が遅いほど減速が大きくなるような関数が使用されています。plugin_step 関数の coefficient 引数は、この加速度に影響を与えます。
+    - 縦方向の加速度: ストーンの速度に基づいて計算される、進行方向の減速です。速度が遅いほど減速が大きくなるような関数が使用されています。step 関数の coefficient 引数は、この加速度に影響を与えます。
 
     - ヨーレート: ストーンの速度と角速度に基づいて計算される、進行方向の変化率です。角速度の符号とストーンの速度によって左右どちらに曲がるかが決まります。
 
@@ -135,13 +135,13 @@ cmake --build . --config Release
 
     - 衝突: ストーン同士の衝突は、Box2Dの物理エンジンによって処理されます。ContactListener クラスで衝突後の処理 (PostSolve) が行われ、衝突時の法線方向と接線方向のインパルス（力積）が記録されます。反発係数は 1.0 に設定されています。
 
-    - ストーンの状態: 各ストーンはアクティブ（awake）であるか非アクティブであるかの状態を持ちます。plugin_set_velocity で投球されたストーンはアクティブになり、速度がほぼ0になるか、プレイエリア外に出ると非アクティブになります。
+    - ストーンの状態: 各ストーンはアクティブ（awake）であるか非アクティブであるかの状態を持ちます。set_velocity で投球されたストーンはアクティブになり、速度がほぼ0になるか、プレイエリア外に出ると非アクティブになります。
 
 - ゲームルール:
 
-    - ファイブロックルール: 最初の5投までは、フリーガードゾーン（ティーライン手前、ハウス外）にある相手のストーンを直接テイクアウトすることができません。plugin_set_status(plugin, 0) でこのルールを適用します。freeguardzone_checker() と is_in_playarea() 関数が関連します。
+    - ファイブロックルール: 最初の5投までは、フリーガードゾーン（ティーライン手前、ハウス外）にある相手のストーンを直接テイクアウトすることができません。set_status(plugin, 0) でこのルールを適用します。freeguardzone_checker() と is_in_playarea() 関数が関連します。
 
-    - ノーティックルール: 特定の条件（ティーライン手前、ハウスの前端より奥、センターライン上）を満たすストーンに、相手のストーンが接触した場合、接触した両方のストーンを元の位置に戻すルールです。plugin_set_status(plugin, 1) でこのルールを適用します。no_tick_checker() と no_tick_rule() 関数が関連します。
+    - ノーティックルール: 特定の条件（ティーライン手前、ハウスの前端より奥、センターライン上）を満たすストーンに、相手のストーンが接触した場合、接触した両方のストーンを元の位置に戻すルールです。set_status(plugin, 1) でこのルールを適用します。no_tick_checker() と no_tick_rule() 関数が関連します。
 
     - プレイエリア: ストーンの中心が定義された境界 (x_upper_limit, x_lower_limit, y_upper_limit, y_lower_limit) を超えると、プレイエリア外と判定され、無効化されます。
 
@@ -175,17 +175,17 @@ public class CreateButton : MonoBehaviour
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
     private static extern void destroy_plugin(IntPtr fcv1_simulator);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void plugin_reset_stones(IntPtr fcv1_simulator);
+    private static extern void reset_stones(IntPtr fcv1_simulator);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void plugin_set_stones(IntPtr fcv1_simulator);
+    private static extern void set_stones(IntPtr fcv1_simulator);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void plugin_set_velocity(IntPtr fcv1_simulator, float velocity_x, float velocity_y, float angular_velocity, uint total_shot, uint shot_per_team, uint team_id);
+    private static extern void set_velocity(IntPtr fcv1_simulator, float velocity_x, float velocity_y, float angular_velocity, uint total_shot, uint shot_per_team, uint team_id);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void plugin_set_status(IntPtr fcv1_simulator, int status);    // 0: five rock rule, 1: no tick rule
+    private static extern void set_status(IntPtr fcv1_simulator, int status);    // 0: five rock rule, 1: no tick rule
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void plugin_get_stones(IntPtr fcv1_simualtor);
+    private static extern void check_rule(IntPtr fcv1_simualtor);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool plugin_step(IntPtr fcv1_simulator, int stone_id, float coefficient);
+    private static extern bool step(IntPtr fcv1_simulator, int stone_id, float coefficient);
 
     StoneData[] stone_data = new StoneData[16];
     private IntPtr fcv1_simulator; // fcv1_simulator をクラス内で宣言
@@ -197,12 +197,12 @@ public class CreateButton : MonoBehaviour
         fcv1_simulator = create_plugin(stone_data);
         Debug.Log("Plugin created");
         // 全てのストーンの位置をハック(0.0f, 0.0f)に移動
-        plugin_reset_stones(fcv1_simulator);
+        reset_stones(fcv1_simulator);
         Debug.Log("Stones reset");
         // 適用するルール(ファイブロックかノーティックか)を選択
-        plugin_set_status(fcv1_simulator, 0);   // 0: five rock rule, 1: no tick rule, Default is 0
+        set_status(fcv1_simulator, 0);   // 0: five rock rule, 1: no tick rule, Default is 0
         // 次のストーンの投球指示
-        plugin_set_velocity(fcv1_simulator, velocity_x: 0.12f, velocity_y: 2.3f, angular_velocity: 1.57f, total_shot: 0, shot_per_team: 0, team_id: 0);
+        set_velocity(fcv1_simulator, velocity_x: 0.12f, velocity_y: 2.3f, angular_velocity: 1.57f, total_shot: 0, shot_per_team: 0, team_id: 0);
         Debug.Log("Velocity set");
 
         bool isRunning = true;
@@ -210,7 +210,7 @@ public class CreateButton : MonoBehaviour
         // 投球指示をもとに、シミュレーションを開始(たまにバグって止まらないことがあるらしく、それらしきものを見つけて修正したが、一応シミュレーション回数の上限を50000と設けてシミュレーションを回す)
         while (isRunning && count < 50000)
         {
-            isRunning = plugin_step(fcv1_simulator, stone_id: -1, coefficient: 1.0f);
+            isRunning = step(fcv1_simulator, stone_id: -1, coefficient: 1.0f);
             count++;
         }
         for (int i = 0; i < stone_data.Length; i++)
@@ -218,12 +218,12 @@ public class CreateButton : MonoBehaviour
             Debug.Log($"Stone {i}: Position = ({stone_data[i].position.x}, {stone_data[i].position.y})");
         }
         // 次のストーンの投球指示
-        plugin_set_velocity(fcv1_simulator, velocity_x: 0.08f, velocity_y: 3.6f, angular_velocity: 1.57f, total_shot: 1, shot_per_team: 0, team_id: 1);
+        set_velocity(fcv1_simulator, velocity_x: 0.08f, velocity_y: 3.6f, angular_velocity: 1.57f, total_shot: 1, shot_per_team: 0, team_id: 1);
         isRunning = true;
         count = 0;
         while (isRunning && count < 50000)
         {
-            isRunning = plugin_step(fcv1_simulator, stone_id: -1, coefficient: 1.0f);
+            isRunning = step(fcv1_simulator, stone_id: -1, coefficient: 1.0f);
             count++;
         }
         for (int i = 0; i < stone_data.Length; i++)
@@ -231,7 +231,7 @@ public class CreateButton : MonoBehaviour
             Debug.Log($"Stone {i}: Position = ({stone_data[i].position.x}, {stone_data[i].position.y})");
         }
         // プレイエリア外のストーン及び、ファイブロック・ノーティックルール適用後のストーンの位置を取得
-        plugin_get_stones(fcv1_simulator);
+        check_rule(fcv1_simulator);
         Debug.Log("Apply curling rule");
         for (int i = 0; i < stone_data.Length; i++)
         {

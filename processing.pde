@@ -18,12 +18,12 @@ public interface SimulatorLibrary extends Library {
 
   Pointer create_plugin(Pointer stoneData);
   void destroy_plugin(Pointer plugin);
-  void plugin_reset_stones(Pointer plugin);
-  void plugin_set_stones(Pointer plugin);
-  void plugin_set_velocity(Pointer plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, int shot_per_team, int team_id);
-  void plugin_set_status(Pointer plugin, int status);
-  void plugin_get_stones(Pointer plugin);
-  boolean plugin_step(Pointer plugin, int index, float coefficient);
+  void reset_stones(Pointer plugin);
+  void set_stones(Pointer plugin);
+  void set_velocity(Pointer plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, int shot_per_team, int team_id);
+  void set_status(Pointer plugin, int status);
+  void check_rule(Pointer plugin);
+  boolean step(Pointer plugin, int index, float coefficient);
 }
 
 // Declare the structures used in the C++ library
@@ -79,16 +79,16 @@ void setup() {
   }
 
   // Set the rule(0: five rock, 1: no-tick)
-  simulator.plugin_set_status(plugin, 0);
+  simulator.set_status(plugin, 0);
 
   // Set the velocity of the stone which is thrown by the player
-  simulator.plugin_set_velocity(plugin, 0.12f, 2.3f, 1.57f, 0, 0, 0);
+  simulator.set_velocity(plugin, 0.12f, 2.3f, 1.57f, 0, 0, 0);
 
   boolean flag = true;
   int count = 0;
   // Simulate the motion of the stones
   while (flag && count < 50000) {
-    flag = simulator.plugin_step(plugin, -1, 1.0f);
+    flag = simulator.step(plugin, -1, 1.0f);
     count++;
     for (int i = 0; i < stoneDataArray.length; i++) {
       stoneDataArray[i].read();
@@ -101,13 +101,13 @@ void setup() {
   }
 
   // Set the velocity of the stone which is thrown by the opponent
-  simulator.plugin_set_velocity(plugin, 0.08f, 3.6f, 1.57f, 1, 0, 1);
+  simulator.set_velocity(plugin, 0.08f, 3.6f, 1.57f, 1, 0, 1);
   flag = true;
   count = 0;
 
   // Simulate the motion of the stones again
   while (flag && count < 50000) {
-    flag = simulator.plugin_step(plugin, -1, 1.0f);
+    flag = simulator.step(plugin, -1, 1.0f);
     count++;
     for (int i = 0; i < stoneDataArray.length; i++) {
         stoneDataArray[i].read();
@@ -117,7 +117,7 @@ void setup() {
   for (int i = 0; i < stoneDataArray.length; i++) {
     println("Stone " + i + ": " + stoneDataArray[i].position.x + ", " + stoneDataArray[i].position.y);
   }
-  simulator.plugin_get_stones(plugin);
+  simulator.check_rule(plugin);
   // Read the position of the stones after applying rule
   for (int i = 0; i < stoneDataArray.length; i++) {
       stoneDataArray[i].read();
@@ -128,7 +128,7 @@ void setup() {
     println("Stone " + i + ": " + stoneDataArray[i].position.x + ", " + stoneDataArray[i].position.y);
   }
   // All the stones are reset to the initial position
-  simulator.plugin_reset_stones(plugin);
+  simulator.reset_stones(plugin);
   
   // Read the position of the stones after reset
   for (int i = 0; i < stoneDataArray.length; i++) {
