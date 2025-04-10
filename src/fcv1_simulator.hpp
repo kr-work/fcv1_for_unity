@@ -4,14 +4,10 @@
 
 #ifdef _WIN32
   #define EXPORT_API extern "C" __declspec(dllexport)
+  #define DEPRECATED(msg) extern "C" __declspec(deprecated(msg))
 #elif __linux__ || __APPLE__
   #define EXPORT_API extern "C" __attribute__((visibility("default")))
-#endif
-
-#ifdef _MSC_VER
-    #define DEPRECATED(msg) __declspec(deprecated(msg))
-#else
-    #define DEPRECATED(msg) __attribute__((deprecated(msg)))
+  #define DEPRECATED(msg) extern "C" __attribute__((deprecated(msg)))
 #endif
 
 using json = nlohmann::json;
@@ -378,7 +374,7 @@ EXPORT_API void plugin_set_status(SimulatorFCV1* plugin, int status);
 /// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
 /// @param plugin 
 /// @return 
-EXPORT_API void plugin_get_stones(SimulatorFCV1* plugin) DEPRECATED("Please use new function plugin_check_rule");
+DEPRECATED("Please use new function plugin_check_rule") void plugin_get_stones(SimulatorFCV1* plugin) ;
 
 /// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
 /// @param plugin
