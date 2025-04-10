@@ -335,36 +335,22 @@ private:
 /// @brief Create a "SimulatorFCV1" plugin instance
 /// @param stone_data This is a pointer to the stone data buffer. Mainly used to set and get the stone position.
 /// @return "SimulatorFCV1" plugin instance
-EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data)
-{
-    SimulatorFCV1* plugin = new SimulatorFCV1();
-    plugin->set_stone_position_buffer(stone_data);
-    return plugin;
-}
+EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data);
 
 /// @brief Destroy the "SimulatorFCV1" plugin instance
 /// @param plugin Simulator plugin instance
 /// @return 
-EXPORT_API void destroy_plugin(SimulatorFCV1* plugin)
-{
-    delete plugin;
-}
+EXPORT_API void destroy_plugin(SimulatorFCV1* plugin);
 
 /// @brief Reset the stone position.
 /// @param plugin Simulator plugin instance.
 /// @return 
-EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin)
-{
-    plugin->reset_stones();
-}
+EXPORT_API void plugin_reset_stones(SimulatorFCV1* plugin);
 
 /// @brief Set the stone position.
 /// @param plugin Simulator plugin instance.
 /// @return 
-EXPORT_API void plugin_set_stones(SimulatorFCV1* plugin)
-{
-    plugin->set_stones();
-}
+EXPORT_API void plugin_set_stones(SimulatorFCV1* plugin);
 
 /// @brief Set the stone velocity.
 /// @param plugin Simulator plugin instance.
@@ -375,43 +361,28 @@ EXPORT_API void plugin_set_stones(SimulatorFCV1* plugin)
 /// @param shot_per_team The number of shots per team.
 /// @param team_id 0: Team0, 1: Team1
 /// @return 
-EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id)
-{
-    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, total_shot,shot_per_team, team_id);
-}
+EXPORT_API void plugin_set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id);
 
 /// @brief Set the status of the plugin.
 /// @param plugin simulator plugin instance.
 /// @param status 0: five lock, 1: no tick
 /// @return 
-EXPORT_API void plugin_set_status(SimulatorFCV1* plugin, int status)
-{
-    plugin->set_status(status);
-}
+EXPORT_API void plugin_set_status(SimulatorFCV1* plugin, int status);
 
 /// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
 /// @param plugin 
 /// @return 
-[[deprecated ("Please use new function \"plugin_check_rule\"")]]
 EXPORT_API void plugin_get_stones(SimulatorFCV1* plugin)
-{
-    plugin->get_stones();
-}
+    __attribute__((deprecated("Please use new function plugin_check_rule")));
 
 /// @brief Get the stone position. The stone position is stored in the "stone_position_buffer" of the plugin.
 /// @param plugin
 /// @return
-EXPORT_API void plugin_check_rule(SimulatorFCV1* plugin)
-{
-    plugin->get_stones();
-}
+EXPORT_API void plugin_check_rule(SimulatorFCV1* plugin);
 
 /// @brief Simulate the stones.
 /// @param plugin 
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-EXPORT_API bool plugin_step(SimulatorFCV1* plugin, int index, float coefficient)
-{
-    return plugin->step(index, coefficient);
-}
+EXPORT_API bool plugin_step(SimulatorFCV1* plugin, int index, float coefficient);
