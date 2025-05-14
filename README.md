@@ -70,7 +70,7 @@ cmake --build . --config Release
 
     - 内部処理: 内部的には SimulatorFCV1::set_stones() が呼ばれます。プラグイン作成時に渡された stone_position_buffer の情報に基づいて、Box2DのBody (stone_bodies) の位置とアクティブ状態を更新します。
 
-- **set_velocity**(SimulatorFCV1* plugin,float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id):
+- **set_velocity**(SimulatorFCV1* plugin,float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status):
 
     - 機能: 投球するストーンの初速度、角速度、ゲームの状態（ショット数、チームID）を設定し、投球を開始します。
 
@@ -82,6 +82,8 @@ cmake --build . --config Release
         - total_shot: ゲーム全体でのショット数（0から）。
         - shot_per_team: 現在のチームが投球したショット数（0から7）。
         - team_id: 投球するチームのID（0: Team0、1: Team1）。
+        - shot_status: このターンに投球するショットの種類を選択(0: draw_shot, 1: takeout_shot)
+          デフォルトは0としてあります。(万博に使用するAIは全てdraw_shotを使用します)   
 
     - 戻り値: なし。
 

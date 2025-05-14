@@ -307,7 +307,7 @@ public:
     bool step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
-    void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id);
+    void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status=0);
     void get_stones();
     void set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer);
     void set_status(int status);
@@ -324,6 +324,8 @@ private:
     float new_stone_speed;
     std::vector<digitalcurling3::StoneData> current_positions;
     unsigned int total_shot;
+    unsigned int shot_status;
+    unsigned int index;
     bool free_guard_zone;
     b2World world;
     b2BodyDef stone_body_def;

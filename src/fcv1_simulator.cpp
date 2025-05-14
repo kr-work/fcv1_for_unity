@@ -46,7 +46,7 @@ inline float longitudinal_acceleration(float speed)
 /// \param[in] speed The speed of the stone
 /// \param[in] angularVelocity The angular velocity of the stone
 /// \returns The yaw rate
-inline float yaw_tate(float speed, float angularVelocity)
+inline float yaw_rate(float speed, float angularVelocity)
 {
     if (std::abs(angularVelocity) <= EPSILON)
     {
@@ -223,27 +223,27 @@ void SimulatorFCV1::no_tick_rule()
 bool SimulatorFCV1::step(int stone_id, float coefficient)
 {
     // simulate
-    for (int &index : is_awake)
+    for (int &i : is_awake)
     {
-        b2Vec2 const stone_velocity = stone_bodies[index]->GetLinearVelocity();
+        b2Vec2 const stone_velocity = stone_bodies[i]->GetLinearVelocity();
         auto const [normalized_stone_velocity, stone_speed] = normalize(stone_velocity);
-        float const angular_velocity = stone_bodies[index]->GetAngularVelocity();
+        float const angular_velocity = stone_bodies[i]->GetAngularVelocity();
 
         // 速度を計算
         // ストーンが停止してる場合は無視
         if (stone_speed > EPSILON)
         {
-            digitalcurling3::Vector2 stone_position = {stone_bodies[index]->GetPosition().x, stone_bodies[index]->GetPosition().y};
+            digitalcurling3::Vector2 stone_position = {stone_bodies[i]->GetPosition().x, stone_bodies[i]->GetPosition().y};
             if (stone_position.x > stone_x_upper_limit || stone_x_lower_limit > stone_position.x)
             {
-                stone_bodies[index]->SetTransform(b2Vec2(0.f, 0.f), 0.f);
-                stone_bodies[index]->SetAwake(false);
-                stone_bodies[index]->SetEnabled(false);
-                is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
+                stone_bodies[i]->SetTransform(b2Vec2(0.f, 0.f), 0.f);
+                stone_bodies[i]->SetAwake(false);
+                stone_bodies[i]->SetEnabled(false);
+                is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), i), is_awake.end());
                 continue;
             }
             // ストーンの速度を計算
-            if (index == stone_id)
+            if (i == stone_id)
             {
                 new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f * coefficient;
             } else
@@ -252,23 +252,28 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
             }
             if (new_stone_speed <= 0.f)
             {
-                stone_bodies[index]->SetLinearVelocity(b2Vec2_zero);
-                is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
+                stone_bodies[i]->SetLinearVelocity(b2Vec2_zero);
+                is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), i), is_awake.end());
             }
             else
             {
-                float const yaw = yaw_tate(stone_speed, angular_velocity) * 0.002;
+                float const yaw = yaw_rate(stone_speed, angular_velocity) * 0.002;
                 float const longitudinal_velocity = new_stone_speed * std::cos(yaw);
                 float const transverse_velocity = new_stone_speed * std::sin(yaw);
                 b2Vec2 const &e_longitudinal = normalized_stone_velocity;
                 b2Vec2 const e_transverse = e_longitudinal.Skew();
                 b2Vec2 const new_stone_velocity = longitudinal_velocity * e_longitudinal + transverse_velocity * e_transverse;
-                stone_bodies[index]->SetLinearVelocity(new_stone_velocity);
+                stone_bodies[i]->SetLinearVelocity(new_stone_velocity);
             }
         }else{
-            is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), index), is_awake.end());
+            is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), i), is_awake.end());
         }
 
+        if (i == this->index && this->shot_status == 1)
+        {
+            // takeout shotのときは、角速度を0にして曲がらないよう調整
+            stone_bodies[i]->SetAngularVelocity(0.f);
+        }
         // 角速度を計算
         if (std::abs(angular_velocity) > EPSILON)
         {
@@ -282,7 +287,7 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
             {
                 new_angular_velocity = angular_velocity + angular_accel * angular_velocity / std::abs(angular_velocity);
             }
-            stone_bodies[index]->SetAngularVelocity(new_angular_velocity);
+            stone_bodies[i]->SetAngularVelocity(new_angular_velocity);
         }
     }
 
@@ -298,11 +303,11 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
         return false;
     }
 
-    for (int index: is_awake)
+    for (int j: is_awake)
     {
-        b2Vec2 position = stone_bodies[index]->GetPosition();
+        b2Vec2 position = stone_bodies[j]->GetPosition();
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
-        this->stone_position_buffer[index] = stone_position;
+        this->stone_position_buffer[j] = stone_position;
     }
     return true;
 }
@@ -344,7 +349,7 @@ void SimulatorFCV1::set_stones()
 /// @param angular_velocity The angular velocity of the stone to be thrown
 /// @param shot_per_team The number of shots per team, which is 0 to 7
 /// @param team_id The team that throws the stone. The number that "Team0" is 0 and "Team1" is 1. Team0 is the first attacker at the first end.
-void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot, unsigned int shot_per_team, unsigned int team_id)
+void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot, unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status)
 {
     is_awake.clear();
     in_free_guard_zone.clear();
@@ -352,13 +357,13 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
 
     this->total_shot = total_shot;
     this->shot_per_team = shot_per_team;
-    int index = this->shot_per_team + team_id * 8;
-    stone_bodies[index]->SetLinearVelocity(b2Vec2(velocity_x, velocity_y));
-    stone_bodies[index]->SetAngularVelocity(angular_velocity);
-    stone_bodies[index]->SetEnabled(true);
-    stone_bodies[index]->SetAwake(true);
-    stone_bodies[index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
-    is_awake.push_back(index);
+    this->index = this->shot_per_team + team_id * 8;
+    stone_bodies[this->index]->SetLinearVelocity(b2Vec2(velocity_x, velocity_y));
+    stone_bodies[this->index]->SetAngularVelocity(angular_velocity);
+    stone_bodies[this->index]->SetEnabled(true);
+    stone_bodies[this->index]->SetAwake(true);
+    stone_bodies[this->index]->SetTransform(b2Vec2(0.0f, 0.0f), 0.f);
+    is_awake.push_back(this->index);
     for (size_t i = 0; i < kStoneMax; ++i)
     {
         b2Vec2 position = stone_bodies[i]->GetPosition();
@@ -459,10 +464,11 @@ void set_stones(SimulatorFCV1* plugin)
 /// @param total_shot The total shot of the "end"
 /// @param shot_per_team The number of shots per team.
 /// @param team_id 0: Team0, 1: Team1
+/// @param shot_status 0: draw shot, 1: takeout shot
 /// @return 
-void set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id)
+void set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status)
 {
-    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, total_shot,shot_per_team, team_id);
+    plugin->set_velocity(velocity_x, velocity_y, angular_velocity, total_shot,shot_per_team, team_id, shot_status);
 }
 
 /// @brief Set the status of the plugin.
