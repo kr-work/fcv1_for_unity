@@ -181,7 +181,7 @@ public class CreateButton : MonoBehaviour
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
     private static extern void set_stones(IntPtr fcv1_simulator);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void set_velocity(IntPtr fcv1_simulator, float velocity_x, float velocity_y, float angular_velocity, uint total_shot, uint shot_per_team, uint team_id);
+    private static extern void set_velocity(IntPtr fcv1_simulator, float velocity_x, float velocity_y, float angular_velocity, uint total_shot, uint shot_per_team, uint team_id, uint shot_status);
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
     private static extern void set_status(IntPtr fcv1_simulator, int status);    // 0: five rock rule, 1: no tick rule
     [DllImport("simulator", CallingConvention = CallingConvention.Cdecl)]
@@ -204,7 +204,7 @@ public class CreateButton : MonoBehaviour
         // 適用するルール(ファイブロックかノーティックか)を選択
         set_status(fcv1_simulator, 0);   // 0: five rock rule, 1: no tick rule, Default is 0
         // 次のストーンの投球指示
-        set_velocity(fcv1_simulator, velocity_x: 0.12f, velocity_y: 2.3f, angular_velocity: 1.57f, total_shot: 0, shot_per_team: 0, team_id: 0);
+        set_velocity(fcv1_simulator, velocity_x: 0.12f, velocity_y: 2.3f, angular_velocity: 1.57f, total_shot: 0, shot_per_team: 0, team_id: 0, shot_status: 0);
         Debug.Log("Velocity set");
 
         bool isRunning = true;
@@ -220,7 +220,7 @@ public class CreateButton : MonoBehaviour
             Debug.Log($"Stone {i}: Position = ({stone_data[i].position.x}, {stone_data[i].position.y})");
         }
         // 次のストーンの投球指示
-        set_velocity(fcv1_simulator, velocity_x: 0.08f, velocity_y: 3.6f, angular_velocity: 1.57f, total_shot: 1, shot_per_team: 0, team_id: 1);
+        set_velocity(fcv1_simulator, velocity_x: 0.12f, velocity_y: 2.3f, angular_velocity: 1.57f, total_shot: 1, shot_per_team: 0, team_id: 1, shot_status: 1);
         isRunning = true;
         count = 0;
         while (isRunning && count < 50000)
