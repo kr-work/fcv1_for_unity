@@ -257,7 +257,15 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
             }
             else
             {
-                float const yaw = yaw_rate(stone_speed, angular_velocity) * 0.002;
+                float yaw = 0.f;
+                if (this->index == i && this->shot_status == 1)
+                {
+                    yaw = 0.f;
+                }
+                else
+                {
+                    yaw = yaw_rate(stone_speed, angular_velocity) * 0.002;
+                }
                 float const longitudinal_velocity = new_stone_speed * std::cos(yaw);
                 float const transverse_velocity = new_stone_speed * std::sin(yaw);
                 b2Vec2 const &e_longitudinal = normalized_stone_velocity;
@@ -269,11 +277,6 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
             is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), i), is_awake.end());
         }
 
-        if (i == this->index && this->shot_status == 1)
-        {
-            // takeout shotのときは、角速度を0にして曲がらないよう調整
-            stone_bodies[i]->SetAngularVelocity(0.f);
-        }
         // 角速度を計算
         if (std::abs(angular_velocity) > EPSILON)
         {
