@@ -363,7 +363,7 @@ EXPORT_API void set_stones(SimulatorFCV1* plugin);
 /// @param shot_per_team The number of shots per team.
 /// @param team_id 0: Team0, 1: Team1
 /// @return 
-EXPORT_API void set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id);
+EXPORT_API void set_velocity(SimulatorFCV1* plugin, float velocity_x, float velocity_y, float angular_velocity, int total_shot, unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status);
 
 /// @brief Set the status of the plugin.
 /// @param plugin simulator plugin instance.
