@@ -361,6 +361,7 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     this->total_shot = total_shot;
     this->shot_per_team = shot_per_team;
     this->index = this->shot_per_team + team_id * 8;
+    this->shot_status = shot_status;
     stone_bodies[this->index]->SetLinearVelocity(b2Vec2(velocity_x, velocity_y));
     stone_bodies[this->index]->SetAngularVelocity(angular_velocity);
     stone_bodies[this->index]->SetEnabled(true);
