@@ -29,6 +29,12 @@ constexpr float EPSILON = std::numeric_limits<float>::epsilon();
 constexpr size_t stones_per_simulation = 16;
 constexpr size_t num_coordinates = 2;
 
+struct StepResult
+{
+    bool finished = true; /// シミュレーションが終了したかどうか
+    float thrown_stone_angular_velocity = 0.0f; /// 投げられたストーンの角速度
+};
+
 struct Velocity
 {
     b2Vec2 vel;
@@ -304,7 +310,7 @@ public:
     bool on_center_line(b2Body *body);
     void no_tick_checker();
     void no_tick_rule();
-    bool step(int stone_id = -1, float coefficient = 1.0f);
+    StepResult step(int stone_id = -1, float coefficient = 1.0f);
     void set_stones();
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status=0);
@@ -317,6 +323,7 @@ private:
     std::vector<digitalcurling3::StoneData> stones;
     int shot_per_team;
     float angular_velocity;
+    StepResult step_result;
     std::vector<int> is_awake;
     std::vector<int> is_no_tick;
     std::vector<int> in_free_guard_zone;
@@ -381,4 +388,4 @@ EXPORT_API void check_rule(SimulatorFCV1* plugin);
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-EXPORT_API bool step(SimulatorFCV1* plugin, int index, float coefficient);
+EXPORT_API StepResult step(SimulatorFCV1* plugin, int index, float coefficient);

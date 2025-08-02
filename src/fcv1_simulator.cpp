@@ -220,7 +220,7 @@ void SimulatorFCV1::no_tick_rule()
     }
 }
 
-bool SimulatorFCV1::step(int stone_id, float coefficient)
+StepResult SimulatorFCV1::step(int stone_id, float coefficient)
 {
     // simulate
     for (int &i : is_awake)
@@ -303,8 +303,11 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
     
     if (is_awake.empty())
     {
-        return false;
+        step_result.finished = false;
+        step_result.thrown_stone_angular_velocity = stone_bodies[stone_id]->GetAngularVelocity();
+        return step_result;
     }
+
 
     for (int j: is_awake)
     {
@@ -312,7 +315,7 @@ bool SimulatorFCV1::step(int stone_id, float coefficient)
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
         this->stone_position_buffer[j] = stone_position;
     }
-    return true;
+    return step_result;
 }
 
 void SimulatorFCV1::reset_stones()
@@ -497,7 +500,7 @@ void check_rule(SimulatorFCV1* plugin)
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-bool step(SimulatorFCV1* plugin, int index, float coefficient)
+StepResult step(SimulatorFCV1* plugin, int index, float coefficient)
 {
     return plugin->step(index, coefficient);
 }
