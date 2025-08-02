@@ -31,7 +31,7 @@ constexpr size_t num_coordinates = 2;
 
 struct StepResult
 {
-    bool finished = true; /// シミュレーションが終了したかどうか
+    int calculating = 0; /// シミュレーション中かどうか
     float thrown_stone_angular_velocity = 0.0f; /// 投げられたストーンの角速度
 };
 

@@ -303,8 +303,8 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
     
     if (is_awake.empty())
     {
-        step_result.finished = false;
-        step_result.thrown_stone_angular_velocity = stone_bodies[stone_id]->GetAngularVelocity();
+        step_result.calculating = 0;
+        step_result.thrown_stone_angular_velocity = 0.0f;
         return step_result;
     }
 
@@ -315,6 +315,8 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
         this->stone_position_buffer[j] = stone_position;
     }
+    step_result.calculating = 1;
+    step_result.thrown_stone_angular_velocity = stone_bodies[stone_id]->GetAngularVelocity();
     return step_result;
 }
 
