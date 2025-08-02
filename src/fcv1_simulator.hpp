@@ -388,4 +388,4 @@ EXPORT_API void check_rule(SimulatorFCV1* plugin);
 /// @param index THis is stone id. "Team0" is 0 to 7 and "Team1" is 8 to 15.
 /// @param coefficient This is the coefficient of the "dynamic friction coefficient", which is difficult to apply in the simulation directly, so it is multiplied by this coefficient.
 /// @return
-EXPORT_API StepResult step(SimulatorFCV1* plugin, int index, float coefficient);
+EXPORT_API void step(SimulatorFCV1* plugin, int index, float coefficient, StepResult* step_result);
