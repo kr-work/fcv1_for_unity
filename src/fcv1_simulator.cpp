@@ -314,6 +314,7 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
         b2Vec2 position = stone_bodies[j]->GetPosition();
         digitalcurling3::Vector2 stone_position = {position.x, position.y};
         this->stone_position_buffer[j] = stone_position;
+        this->stone_angular_velocity_buffer[j].angular_velocity = stone_bodies[j]->GetAngularVelocity();
     }
     step_result.calculating = 1;
     step_result.thrown_stone_angular_velocity = stone_bodies[stone_id]->GetAngularVelocity();
@@ -426,18 +427,19 @@ void SimulatorFCV1::get_stones()
     }
 }
 
-void SimulatorFCV1::set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer)
+void SimulatorFCV1::set_stone_buffer(digitalcurling3::StoneData *stone_position_buffer, digitalcurling3::StoneAngularVelocity *stone_angular_velocity_buffer)
 {
     this->stone_position_buffer = stone_position_buffer;
+    this->stone_angular_velocity_buffer = stone_angular_velocity_buffer;
 }
 
 /// @brief Create a "SimulatorFCV1" plugin instance
 /// @param stone_data This is a pointer to the stone data buffer. Mainly used to set and get the stone position.
 /// @return "SimulatorFCV1" plugin instance
-SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data)
+SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data, digitalcurling3::StoneAngularVelocity* stone_angular_velocity_data)
 {
     SimulatorFCV1* plugin = new SimulatorFCV1();
-    plugin->set_stone_position_buffer(stone_data);
+    plugin->set_stone_buffer(stone_data, stone_angular_velocity_data);
     return plugin;
 }
 

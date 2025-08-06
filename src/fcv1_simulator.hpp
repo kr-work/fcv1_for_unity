@@ -217,6 +217,16 @@ namespace digitalcurling3
 
 namespace digitalcurling3
 {
+    /// \brief ストーンの角速度を格納します．
+    struct StoneAngularVelocity
+    {
+        float angular_velocity; /// ストーンの角速度を格納
+        StoneAngularVelocity() : angular_velocity(0.0f) {}
+    };
+}
+
+namespace digitalcurling3
+{
     /// \brief 位置を格納します．
     struct StoneDataVector
     {
@@ -315,7 +325,7 @@ public:
     void reset_stones();
     void set_velocity(float velocity_x, float velocity_y, float angular_velocity, unsigned int total_shot,unsigned int shot_per_team, unsigned int team_id, unsigned int shot_status=0);
     void get_stones();
-    void set_stone_position_buffer(digitalcurling3::StoneData *stone_position_buffer);
+    void set_stone_buffer(digitalcurling3::StoneData *stone_position_buffer, digitalcurling3::StoneAngularVelocity *stone_angular_velocity_buffer);
     void set_status(int status);
 
 private:
@@ -329,7 +339,6 @@ private:
     std::vector<int> in_free_guard_zone;
     digitalcurling3::FiveLockWithID five_lock_with_id;
     float new_stone_speed;
-    std::vector<digitalcurling3::StoneData> current_positions;
     unsigned int total_shot;
     unsigned int shot_status;
     unsigned int index;
@@ -338,13 +347,14 @@ private:
     b2BodyDef stone_body_def;
     std::array<b2Body *, static_cast<std::size_t>(kStoneMax)> stone_bodies;
     digitalcurling3::StoneData* stone_position_buffer = nullptr;
+    digitalcurling3::StoneAngularVelocity* stone_angular_velocity_buffer = nullptr;
     int status = 0; // 0: five lock, 1: no tick
 };
 
 /// @brief Create a "SimulatorFCV1" plugin instance
 /// @param stone_data This is a pointer to the stone data buffer. Mainly used to set and get the stone position.
 /// @return "SimulatorFCV1" plugin instance
-EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data);
+EXPORT_API SimulatorFCV1* create_plugin(digitalcurling3::StoneData* stone_data, digitalcurling3::StoneAngularVelocity* stone_angular_velocity_data);
 
 /// @brief Destroy the "SimulatorFCV1" plugin instance
 /// @param plugin Simulator plugin instance
