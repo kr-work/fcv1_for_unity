@@ -237,6 +237,7 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
             if (stone_position.x > stone_x_upper_limit || stone_x_lower_limit > stone_position.x)
             {
                 stone_bodies[i]->SetTransform(b2Vec2(0.f, 0.f), 0.f);
+                stone_bodies[i]->SetAngularVelocity(0.0f);
                 stone_bodies[i]->SetAwake(false);
                 stone_bodies[i]->SetEnabled(false);
                 is_awake.erase(std::remove(is_awake.begin(), is_awake.end(), i), is_awake.end());
@@ -305,6 +306,14 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
     {
         step_result.calculating = 0;
         step_result.thrown_stone_angular_velocity = 0.0f;
+        for (size_t i = 0; i < kStoneMax; ++i)
+        {
+            stone_bodies[i]->SetAngularVelocity(0.0f);
+            b2Vec2 position = stone_bodies[i]->GetPosition();
+            digitalcurling3::Vector2 stone_position = {position.x, position.y};
+            this->stone_position_buffer[i] = stone_position;
+            this->stone_angular_velocity_buffer[i].angular_velocity = stone_bodies[i]->GetAngularVelocity();
+        }
         return step_result;
     }
 
