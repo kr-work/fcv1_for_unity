@@ -73,6 +73,8 @@ void SimulatorFCV1::ContactListener::PostSolve(b2Contact *contact, const b2Conta
     collision.a.id = static_cast<int>(a_body->GetUserData().pointer);
     collision.b.id = static_cast<int>(b_body->GetUserData().pointer);
 
+    instance_->step_result.is_collision_occured = 1;
+
     add_unique_id(instance_->is_awake, collision.a.id);
     add_unique_id(instance_->is_awake, collision.b.id);
 

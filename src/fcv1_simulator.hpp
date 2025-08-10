@@ -31,8 +31,10 @@ constexpr size_t num_coordinates = 2;
 
 struct StepResult
 {
-    int calculating = 0; /// シミュレーション中かどうか
+    int calculating = 0;                        /// シミュレーション中かどうか
+    int is_collision_occured = 0;               /// 衝突が発生したかどうか
     float thrown_stone_angular_velocity = 0.0f; /// 投げられたストーンの角速度
+
 };
 
 struct Velocity
