@@ -73,8 +73,6 @@ void SimulatorFCV1::ContactListener::PostSolve(b2Contact *contact, const b2Conta
     collision.a.id = static_cast<int>(a_body->GetUserData().pointer);
     collision.b.id = static_cast<int>(b_body->GetUserData().pointer);
 
-    instance_->step_result.is_collision_occured = 1;
-
     add_unique_id(instance_->is_awake, collision.a.id);
     add_unique_id(instance_->is_awake, collision.b.id);
 
@@ -297,6 +295,11 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
         }
     }
 
+    if (is_awake.size() >= 2)
+    {
+        step_result.is_collision_occured = 1;
+    }
+
     // storage.collisions.clear();
 
     world.Step(
@@ -374,6 +377,7 @@ void SimulatorFCV1::set_velocity(float velocity_x, float velocity_y, float angul
     is_awake.clear();
     in_free_guard_zone.clear();
     is_no_tick.clear();
+    step_result.is_collision_occured = 0;
 
     this->total_shot = total_shot;
     this->shot_per_team = shot_per_team;
