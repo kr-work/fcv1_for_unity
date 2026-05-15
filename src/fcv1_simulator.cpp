@@ -193,7 +193,7 @@ void SimulatorFCV1::no_tick_checker()
     {
         b2Body *body = stone_bodies[i];
         float position_y = body -> GetPosition().y;
-        if (position_y > y_lower_limit && position_y < (tee_line - house_radius) && on_center_line(body))
+        if (position_y > stone_y_lower_limit && position_y < (tee_line - house_radius) && on_center_line(body))
         {
             is_no_tick.push_back(i);
         }
@@ -431,7 +431,7 @@ void SimulatorFCV1::get_stones()
     {
         b2Body *body = stone_bodies[i];
         b2Vec2 position = body->GetPosition();
-        if (position.x > stone_x_upper_limit || position.x < stone_x_lower_limit || position.y > y_upper_limit || position.y < y_lower_limit)  // This stone is out of the play area
+        if (position.x > stone_x_upper_limit || position.x < stone_x_lower_limit || position.y > y_upper_limit || position.y < stone_y_lower_limit)  // This stone is out of the play area
         {
             body->SetTransform(b2Vec2(0.f, 0.f), 0.f);
             body->SetAwake(false);
