@@ -246,10 +246,10 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
             // ストーンの速度を計算
             if (i == stone_id)
             {
-                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f * coefficient;
+                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.001f * coefficient;
             } else
             {
-                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.002f;
+                new_stone_speed = stone_speed + longitudinal_acceleration(stone_speed) * 0.001f;
             }
             if (new_stone_speed <= 0.f)
             {
@@ -265,7 +265,7 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
                 }
                 else
                 {
-                    yaw = yaw_rate(stone_speed, angular_velocity) * 0.002;
+                    yaw = yaw_rate(stone_speed, angular_velocity) * 0.001;
                 }
                 float const longitudinal_velocity = new_stone_speed * std::cos(yaw);
                 float const transverse_velocity = new_stone_speed * std::sin(yaw);
@@ -281,7 +281,7 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
         // 角速度を計算
         if (std::abs(angular_velocity) > EPSILON)
         {
-            float const angular_accel = angular_acceleration(stone_speed) * 0.002;
+            float const angular_accel = angular_acceleration(stone_speed) * 0.001;
             float new_angular_velocity = 0.f;
             if (std::abs(angular_velocity) <= std::abs(angular_accel))
             {
@@ -303,7 +303,7 @@ StepResult SimulatorFCV1::step(int stone_id, float coefficient)
     // storage.collisions.clear();
 
     world.Step(
-        0.002,
+        0.001,
         8,  // velocityIterations (公式マニュアルでの推奨値は 8)
         3); // positionIterations (公式マニュアルでの推奨値は 3)
     
